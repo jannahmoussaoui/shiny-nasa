@@ -1,5 +1,5 @@
 # Group Decision Making Demo
-**Authors:** Jannah R. Moussaoui & Fatima A. Moussaoui
+**Authors:** Jannah R. Moussaoui, Fatima A. Moussaoui, & Jason S. McCarley
 
 **Project:** Shiny App for NASA Moon Survival Task
 
