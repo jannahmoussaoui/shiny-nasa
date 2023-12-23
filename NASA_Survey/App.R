@@ -1,15 +1,9 @@
 library(shiny)
 library(shinysurveys)
 library(tibble)
-library(rsconnect)
-# a function to stop the script when one of the variables cannot be found. and to strip quotation marks from the secrets when you supplied them. (maybe it is just easier to never use them)
-error_on_missing_name <- function(name){
-  var <- Sys.getenv(name, unset=NA)
-  if(is.na(var)){
-    stop(paste0("cannot find ",name, " !"),call. = FALSE)
-  }}
 
-if (interactive()) {
+# Create questions
+## ShinySurveys expects these to be in a data frame
   df <- data.frame(
     question = c("Session ID:", 
                  "Code name:",
@@ -46,6 +40,9 @@ if (interactive()) {
     required = TRUE
   )
   
+  
+# Define the user interface
+## No free-floating text box argument so use survey_description for matrix question
   ui <- fluidPage(
     surveyOutput(df,
                  survey_title = "NASA Exercise: Survival on the Moon",
@@ -53,6 +50,7 @@ if (interactive()) {
                  theme = "#000000")
   )
   
+# Define the server  
   server <- function(input, output, session) {
     renderSurvey()
     observeEvent(input$submit, {
@@ -68,6 +66,8 @@ if (interactive()) {
     })
   }
   
+# Here is our app
+  
   shinyApp(ui, server)
-}
+
 
