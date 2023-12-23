@@ -1,5 +1,5 @@
 # Group Decision Making Demo
-**Authors:** Jannah R. Moussaoui, Fatima A. Moussaoui, & Jason S. McCarley
+**Contributors:** Jannah R. Moussaoui, Fatima A. Moussaoui, & Jason S. McCarley
 
 **Project:** Shiny App for NASA Moon Survival Task
 
@@ -10,9 +10,10 @@
 - [NASA Moon Survival Task](https://www.csuchico.edu/anthmuseum/_assets/documents/nasa-exercise-survival-on-the-moon.pdf)
 - [Group Decision Fiascoe: Space Shuttle Challenger](10.1177/001872679104400601)
 - [Helpful doc for understanding git](https://dangitgit.com/)
+- [Understanding the matrix stuff](https://rdrr.io/cran/shinysurveys/man/radioMatrixInput.html)
 
 ## 
 
-## Future Directions
+## (Overly ambitious) Future Directions
 - Add de-biasing strategies (e.g., pre-mortem)
 - Add customization to group size
