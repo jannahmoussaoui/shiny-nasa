@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <script type="application/shiny-singletons"></script>
+  <script type="application/html-dependencies">jquery[3.6.0];shiny-css[1.8.0];shiny-javascript[1.8.0];radioMatrixInput[0.2.0];bootstrap[3.4.1]</script>
+<script src="jquery-3.6.0/jquery.min.js"></script>
+<link href="shiny-css-1.8.0/shiny.min.css" rel="stylesheet" />
+<script src="shiny-javascript-1.8.0/shiny.min.js"></script>
+<link href="radioMatrixInput-0.2.0/css/radioMatrixInput.css" rel="stylesheet" />
+<script src="radioMatrixInput-0.2.0/js/radioMatrixInput.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="bootstrap-3.4.1/css/bootstrap.min.css" rel="stylesheet" />
+<link href="bootstrap-3.4.1/accessibility/css/bootstrap-accessibility.min.css" rel="stylesheet" />
+<script src="bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script src="bootstrap-3.4.1/accessibility/js/bootstrap-accessibility.min.js"></script>
+</head>
+<body>
+  <div class="container-fluid">
+    <script>
+Shiny.addCustomMessageHandler("add_class", function(params) {
+  $("#" + params.input_id).addClass(params.class_name);
+});
+
+Shiny.addCustomMessageHandler("remove_class", function(params) {
+  $("#" + params.input_id).removeClass(params.class_name);
+});
+
+Shiny.addCustomMessageHandler("disable", function(params) {
+  $el = $("#" + params.input_id);
+  $el.prop("disabled", true);
+  $el.addClass("disabled");
+});
+
+Shiny.addCustomMessageHandler("enable", function(params) {
+  $el = $("#" + params.input_id);
+  $el.prop("disabled", false);
+  $el.removeClass("disabled");
+});
+
+
+$(document).ready(function() {
+  // When one of the buttons are clicked, get the current page
+  // from the button ID.
+  $('.survey-buttons .btn').on('click', function(e) {
+    console.log("Hello");
+    current_id = $(e.target).attr('id');
+    current_page = parseInt(current_id.split('-')[1]);
+
+    // If the button is a "next" button, hide current page and show the next one
+    if ($(e.target).attr('page-action') === 'next') {
+
+      next_page = current_page + 1;
+
+      $('#page-' + current_page).addClass('page-hidden');
+      $('#page-' + current_page).removeClass('page-visible');
+      $('#page-' + next_page).removeClass('page-hidden');
+      $('#page-' + next_page).addClass('page-visible');
+
+    // If the button is a "previous" button, hide current page and show the previous one
+
+    } else if ($(e.target).attr('page-action') === 'previous') {
+
+      previous_page = current_page - 1;
+
+      $('#page-' + current_page).addClass('page-hidden');
+      $('#page-' + current_page).removeClass('page-visible');
+      $('#page-' + previous_page).removeClass('page-hidden');
+      $('#page-' + previous_page).addClass('page-visible');
+
+    }
+
+  });
+
+});</script>
+    <script>
+// define debounce function
+const debounce = function(func, delay) {
+  let timeout;
+
+  return function executed(...args) {
+    const later = function() {
+      clearTimeout(timeout);
+      func(...args);
+    };
+
+    clearTimeout(timeout);
+    timeout = setTimeout(later, delay);
+
+  };
+
+};
+
+$(document).on("shiny:connected", function() {
+    Shiny.setInputValue('shinysurveysConnected', true);
+    var initial_values;
+
+    function getHiddenInputs() {
+
+    hiddenDivs = $('.dependence');
+    var hiddenInputIds = [];
+    var i;
+
+    for (i = 0; i < hiddenDivs.length; i++) {
+      hiddenInputIds[i] = $(hiddenDivs[i]).attr('id').split('-question')[0];
+    }
+      Shiny.setInputValue('shinysurveysHiddenInputs', hiddenInputIds);
+
+    }
+
+    var log_hidden_inputs = debounce(function() {
+      getHiddenInputs();
+     }, 1000)
+
+    $('#submit').on('click', getHiddenInputs);
+
+    $('.question-input').on('click', log_hidden_inputs);
+  });</script>
+    <style>@import url("https://fonts.googleapis.com/css?family=Source+Code+Pro|Montserrat|Raleway");
+body {
+  font-family: 'Raleway', sans-serif;
+  background-color: #262626;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #333;
+  font-family: 'Montserrat', sans-serif;
+}
+
+h1, h2, h3 {
+  text-transform: uppercase;
+  text-align: left;
+  letter-spacing: .1em;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 3rem;
+  margin: 36px 0;
+}
+
+h1.title {
+  color: #416983;
+}
+
+h3 {
+  font-style: italic;
+  font-family: 'Montserrat', sans-serif;
+}
+
+p {
+  color: #333;
+  margin: 35px;
+  margin-bottom: 10px;
+  font-family: 'Raleway', sans-serif;
+}
+
+li.l {
+  margin-left: 40px;
+  margin-right: 35px;
+}
+
+input[type=text]:focus {
+  border-bottom: 1.5px solid black;
+  -webkit-box-shadow: none;
+}
+
+input[type=text] {
+  font-size: 1.5rem;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.12);
+  padding: 15px 0;
+  outline: none;
+  color: #3A506B;
+  background-color: transparent;
+}
+
+label {
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+}
+
+.required {
+  color: red;
+}
+
+.container-fluid .survey {
+  padding: 20px;
+  padding-left: 20%;
+  padding-right: 20%;
+}
+
+@media (max-width: 1195px) {
+  .container-fluid .survey {
+    padding-left: 15%;
+    padding-right: 15%;
+  }
+}
+
+@media (max-width: 992px) {
+  .container-fluid .survey {
+    padding-left: 12.5%;
+    padding-right: 12.5%;
+  }
+}
+
+@media (max-width: 767px) {
+  .container-fluid .survey {
+    padding-left: 10%;
+    padding-right: 10%;
+  }
+}
+
+@media (max-width: 575px) {
+  .container-fluid .survey {
+    padding-left: 7.5%;
+    padding-right: 7.5%;
+  }
+}
+
+.container-fluid .survey .title-description {
+  background-color: white;
+  border-radius: 20px;
+  border-top: 20px solid black;
+  padding-left: 5%;
+  padding-right: 5%;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.container-fluid .survey .title-description #survey-description {
+  text-align: center;
+  margin: 2px;
+  font-size: 1.8rem;
+}
+
+.container-fluid .survey .title-description #survey-title {
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+
+.container-fluid .survey .page-hidden {
+  display: none;
+}
+
+.container-fluid .survey .questions {
+  display: grid;
+  background-color: white;
+  border: 0.5px solid #CCCCCC;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+  min-height: 138px;
+  font-size: 1.4rem;
+}
+
+.container-fluid .survey .questions.dependence {
+  padding: 0;
+  display: none;
+}
+
+.container-fluid .survey .questions .question-input {
+  margin: auto;
+  width: 100%;
+}
+
+.container-fluid .survey .questions .question-input .shiny-input-container {
+  width: 100%;
+  padding: 0;
+}
+</style>
+    <div class="survey">
+      <div style="display: none !important;">
+        <div class="form-group shiny-input-container">
+          <label class="control-label" id="userID-label" for="userID">Enter your username.</label>
+          <input id="userID" type="text" class="shiny-input-text form-control" value="NO_USER_ID"/>
+        </div>
+      </div>
+      <div class="title-description">
+        <h1 id="survey-title">NASA Exercise: Survival on the Moon</h1>
+        <p id="survey-description">You are a member of a space crew originally scheduled to rendezvous with a mother ship on the lighted surface of the moon. However, due to mechanical difficulties, your ship was forced to land at a spot some 200 miles from the rendezvous point. During reentry and landing, much of the equipment aboard was damaged and, since survival depends on reaching the mother ship, the most critical items available must be chosen for the 200-mile trip. Below are listed the 15 items left intact and undamaged after landing. Your task is to rank order them in terms of their importance for your crew in allowing them to reach the rendezvous point. Place the number 1 by the most important item, the number 2 by the second most important, and so on through number 15 for the least important</p>
+      </div>
+      <div class="questions" id="session_id-question">
+        <div class="question-input">
+          <div class="form-group shiny-input-container">
+            <label class="control-label" id="session_id-label" for="session_id">
+              Session ID:
+              <span class="required">*</span>
+            </label>
+            <input id="session_id" type="text" class="shiny-input-text form-control" value="" placeholder="Placeholder"/>
+          </div>
+        </div>
+      </div>
+      <div class="questions" id="code_name-question">
+        <div class="question-input">
+          <div class="form-group shiny-input-container">
+            <label class="control-label" id="code_name-label" for="code_name">
+              Code name:
+              <span class="required">*</span>
+            </label>
+            <input id="code_name" type="text" class="shiny-input-text form-control" value="" placeholder="Placeholder"/>
+          </div>
+        </div>
+      </div>
+      <div class="questions" id="group-question">
+        <div class="question-input">
+          <div class="form-group shiny-input-container">
+            <label class="control-label" id="group-label" for="group">
+              Group:
+              <span class="required">*</span>
+            </label>
+            <input id="group" type="text" class="shiny-input-text form-control" value="" placeholder="Placeholder"/>
+          </div>
+        </div>
+      </div>
+      <div class="questions" id="participant_n-question">
+        <div class="question-input">
+          <div class="form-group shiny-input-container">
+            <label class="control-label" id="participant_n-label" for="participant_n">
+              Number of Participants:
+              <span class="required">*</span>
+            </label>
+            <input id="participant_n" type="text" class="shiny-input-text form-control" value="" placeholder="Placeholder"/>
+          </div>
+        </div>
+      </div>
+      <div class="questions" id="nasa_matrix-question">
+        <div class="question-input">
+          <div class="radioMatrixInput" id="nasa_matrix">
+            <table>
+              <tr>
+                <th class="required" style="font-size: 18px;">*</th>
+                <th>1</th>
+                <th>2</th>
+                <th>3</th>
+                <th>4</th>
+                <th>5</th>
+                <th>6</th>
+                <th>7</th>
+                <th>8</th>
+                <th>9</th>
+                <th>10</th>
+                <th>11</th>
+                <th>12</th>
+                <th>13</th>
+                <th>14</th>
+                <th>15</th>
+              </tr>
+              <tbody>
+                <tr class="radio-matrix-buttons" id="tr-box_of_matches">
+                  <td class="radio-matrix-buttons-label" id="td-box_of_matches">Box of matches</td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="box_of_matches" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-food_concentrate">
+                  <td class="radio-matrix-buttons-label" id="td-food_concentrate">Food concentrate</td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="food_concentrate" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-50_feet_of_nylon_rope">
+                  <td class="radio-matrix-buttons-label" id="td-50_feet_of_nylon_rope">50 feet of nylon rope</td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="50_feet_of_nylon_rope" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-parachute_silk">
+                  <td class="radio-matrix-buttons-label" id="td-parachute_silk">Parachute silk</td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="parachute_silk" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-portable_heating_unit">
+                  <td class="radio-matrix-buttons-label" id="td-portable_heating_unit">Portable heating unit</td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="portable_heating_unit" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-two_45_caliber_pistol">
+                  <td class="radio-matrix-buttons-label" id="td-two_45_caliber_pistol">Two .45 caliber pistol</td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_45_caliber_pistol" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-one_case_of_dehydrated_milk">
+                  <td class="radio-matrix-buttons-label" id="td-one_case_of_dehydrated_milk">One case of dehydrated milk</td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="one_case_of_dehydrated_milk" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-two_100_lb_tanks_of_oxygen">
+                  <td class="radio-matrix-buttons-label" id="td-two_100_lb_tanks_of_oxygen">Two 100 lb. tanks of oxygen</td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="two_100_lb_tanks_of_oxygen" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-stellar_map">
+                  <td class="radio-matrix-buttons-label" id="td-stellar_map">Stellar map</td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="stellar_map" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-selfinflating_life_raft">
+                  <td class="radio-matrix-buttons-label" id="td-selfinflating_life_raft">Self-inflating life raft</td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="selfinflating_life_raft" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-magnetic_compass">
+                  <td class="radio-matrix-buttons-label" id="td-magnetic_compass">Magnetic compass</td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="magnetic_compass" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-20_liters_of_water">
+                  <td class="radio-matrix-buttons-label" id="td-20_liters_of_water">20 liters of water</td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="20_liters_of_water" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-signal_flares">
+                  <td class="radio-matrix-buttons-label" id="td-signal_flares">Signal flares</td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="signal_flares" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-first_aid_kit_including_injection_needle">
+                  <td class="radio-matrix-buttons-label" id="td-first_aid_kit_including_injection_needle">First aid kit, including injection needle</td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="first_aid_kit_including_injection_needle" value="15"/>
+                  </td>
+                </tr>
+                <tr class="radio-matrix-buttons" id="tr-solarpowered_fm_receivertransmitter">
+                  <td class="radio-matrix-buttons-label" id="td-solarpowered_fm_receivertransmitter">Solar-powered FM receiver-transmitter</td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="1"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="2"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="3"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="4"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="5"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="6"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="7"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="8"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="9"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="10"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="11"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="12"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="13"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="14"/>
+                  </td>
+                  <td>
+                    <input type="radio" name="solarpowered_fm_receivertransmitter" value="15"/>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="survey-buttons">
+        <button id="submit" type="button" class="btn btn-default action-button">Submit</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

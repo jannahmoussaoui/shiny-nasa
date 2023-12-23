@@ -6,7 +6,8 @@ if (interactive()) {
   df <- data.frame(
     question = c("Session ID:", 
                  "Code name:",
-                 "Group:", 
+                 "Group:",
+                 "Number of Participants:",
                  rep("Box of matches", 15),
                  rep("Food concentrate", 15),
                  rep("50 feet of nylon rope", 15),
@@ -25,12 +26,14 @@ if (interactive()) {
     option = c(NA, 
                NA,
                NA,
+               NA,
                rep(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"), 15)),
     input_type = c("text", 
                    "text",
                    "text",
+                   "text",
                    rep("matrix", 225)),
-    input_id = c("session_id", "code_name", "group", rep("nasa_matrix", 225)),
+    input_id = c("session_id", "code_name", "group", "participant_n", rep("nasa_matrix", 225)),
     dependence = NA,
     dependence_value = NA,
     required = TRUE
@@ -50,12 +53,14 @@ if (interactive()) {
         Session_ID = input$session_id,
         Code_name = input$code_name,
         Group = input$group,
+        N = input$participant_n,
         NASA_Matrix = input$nasa_matrix
       )
       print(response_data)
-      write.csv(response_data, "response_data.csv", row.names = FALSE)
+     write.csv(response_data, "response_data.csv", row.names = FALSE)
     })
   }
   
   shinyApp(ui, server)
 }
+
