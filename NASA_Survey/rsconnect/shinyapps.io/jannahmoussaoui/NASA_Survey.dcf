@@ -5,7 +5,7 @@ account: jannahmoussaoui
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 10842014
-bundleId: 8079629
+bundleId: 8080312
 url: https://jannahmoussaoui.shinyapps.io/NASA_Survey/
 version: 1
 asMultiple: FALSE

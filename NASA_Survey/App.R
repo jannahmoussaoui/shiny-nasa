@@ -1,51 +1,224 @@
+library(tidyr)
+library(dplyr)
 library(shiny)
 library(shinysurveys)
 library(tibble)
 library(googlesheets4)
 library(googledrive) # Not actually using this package
 
-# In console: gs4_auth(email = "jannahmoussaoui@gmail.com", cache = ".secrets")
-## A .secrets repo will be created. Do not share. Replace with your own email
+# We need to authenticate with a token to access Google API
+## In console: gs4_auth(email = "jannahmoussaoui@gmail.com", cache = ".secrets")
+## A .secrets repo will be created. Don't git commit this!
+## Replace below with your own email
 gs4_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 drive_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com") # Not using this package
 
 # Create questions
 ## ShinySurveys expects these to be in a data frame
-df <- data.frame(
-  question = c("Session ID:", 
-               "Code name:",
-               "Group:",
-               rep("Box of matches", 15),
-               rep("Food concentrate", 15),
-               rep("50 feet of nylon rope", 15),
-               rep("Parachute silk", 15),
-               rep("Portable heating unit", 15),
-               rep("Two .45 caliber pistol", 15),
-               rep("One case of dehydrated milk", 15),
-               rep("Two 100 lb. tanks of oxygen", 15),
-               rep("Stellar map", 15),
-               rep("Self-inflating life raft", 15),
-               rep("Magnetic compass", 15),
-               rep("20 liters of water", 15),
-               rep("Signal flares", 15),
-               rep("First aid kit, including injection needle", 15),
-               rep("Solar-powered FM receiver-transmitter", 15)),
-  option = c(NA, 
-             NA,
-             NA,
-             rep(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"), 15)),
-  input_type = c("text", 
-                 "text",
-                 "text",
-                 rep("matrix", 225)),
-  input_id = c("session_id", "code_name", "group", rep("nasa_matrix", 225)),
-  dependence = NA,
-  dependence_value = NA,
-  required = TRUE
-)
+## Combining non-select with select questions has rendered
+## some functions virtually useless, e.g., getSurveyData
+## doesn't know how to aggregate, so I did it via tibble
+df1 <- data.frame(question = "Are you completing this individually?",
+                 option = t(c("yes", "no")),
+                 input_type = "y/n",
+                 input_id = "individual",
+                 dependence = NA,
+                 dependence_value = NA,
+                 required = TRUE) %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")  
+df2 <- data.frame(question = "Group:",
+                  option = t(c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")),
+                  input_type = "select",
+                  input_id = "group",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE) %>%
+ pivot_longer(cols = starts_with("option"),
+                  values_to = "option") 
+
+df3 <- data.frame(question = "Code name:",
+                  option = "e.g., Your alias",
+                  input_type = "text",
+                  input_id = "code_name",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE) 
+
+df4 <- data.frame(question = "Box of matches",
+                option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                input_type = "select",
+                input_id = "matches",
+                dependence = NA,
+                dependence_value = NA,
+                required = TRUE
+              )  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option") 
+
+df5 <- data.frame(question = "Food Concentrate",
+                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                  input_type = "select",
+                  input_id = "food",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option") 
+
+df6 <- data.frame(question = "50 feet of nylon rope",
+                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                  input_type = "select",
+                  input_id = "nylon",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option") 
+
+df7 <- data.frame(question = "Parachute silk",
+                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                  input_type = "select",
+                  input_id = "silk",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option") 
+
+df8 <- data.frame(question = "Portable heating unit",
+                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                  input_type = "select",
+                  input_id = "heating",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option") 
+
+df9 <- data.frame(question = "Two .45 caliber pistol",
+                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                  input_type = "select",
+                  input_id = "pistol",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")
+
+df10 <- data.frame(question = "One case of dehydrated milk",
+                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                  input_type = "select",
+                  input_id = "milk",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")
+
+df11 <- data.frame(question = "Two 100 lb. tanks of oxygen",
+                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                  input_type = "select",
+                  input_id = "oxygen",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")
+
+df12 <- data.frame(question = "Stellar map",
+                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                  input_type = "select",
+                  input_id = "map",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")
+
+df13 <- data.frame(question = "Self-inflating life raft",
+                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                  input_type = "select",
+                  input_id = "raft",
+                  dependence = NA,
+                  dependence_value = NA,
+                  required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")
+
+df14 <- data.frame(question = "Magnetic compass",
+                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                   input_type = "select",
+                   input_id = "compass",
+                   dependence = NA,
+                   dependence_value = NA,
+                   required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")
+
+df15 <- data.frame(question = "20 liters of water",
+                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                   input_type = "select",
+                   input_id = "water",
+                   dependence = NA,
+                   dependence_value = NA,
+                   required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")
+
+
+df16 <- data.frame(question = "Signal flares",
+                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                   input_type = "select",
+                   input_id = "flare",
+                   dependence = NA,
+                   dependence_value = NA,
+                   required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")
+
+df17 <- data.frame(question = "First aid kit, including injection needle",
+                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                   input_type = "select",
+                   input_id = "injection",
+                   dependence = NA,
+                   dependence_value = NA,
+                   required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")
+
+df18 <- data.frame(question = "Solar-powered FM receiver-transmitter",
+                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
+                   input_type = "select",
+                   input_id = "receiver",
+                   dependence = NA,
+                   dependence_value = NA,
+                   required = TRUE
+)  %>%
+  pivot_longer(cols = starts_with("option"),
+               values_to = "option")
+
+
+
+df <- bind_rows(df1, df2, df3, df4, df5, df6, df7, df8, df9, df10, df11, df12, df13, df14, df15, df16, df17, df18)
+
+
 
 # Define the user interface
-## No free-floating text box argument so use survey_description for matrix question
+## Use survey_description for select question
 ui <- fluidPage(
   surveyOutput(df,
                survey_title = "NASA Exercise: Survival on the Moon",
@@ -53,33 +226,32 @@ ui <- fluidPage(
                theme = "#000000")
 )
 
-# Define the server  
+## Define the server
 server <- function(input, output, session) {
   renderSurvey()
   observeEvent(input$submit, {
-    response_data <- tibble(
-      Session_ID = input$session_id,
-      Code_name = input$code_name,
-      Group = input$group,
-      NASA_Matrix = as.character(input$nasa_matrix)
-    )
-    print(response_data)
-
-    # Use googlesheets4 functions to append to the sheet
-    sheet_id <- "1XvwU5RxdHTjB_kiEZeGXBxE_3s46905HjsPilRfMZ2g"
-    sheet_name <- "raw_data"
-    
-    # Find the sheet or create a new one
-    ss <- gs4_find(sheet_name)
-    if (is.null(ss)) {
-      ss <- gs4_create(sheet_name)
-      sheet_write(response_data, ss = ss, sheet = sheet_name)
-    } else {
-      # Append the data to the sheet
-      sheet_append(ss, response_data)
-    }
+  showModal(modalDialog(
+    title = "Your response has been recorded!",
+    "Feel free to exit the tab."
+  ))
+  response_data <- getSurveyData()
+  
+  # Use googlesheets4 functions to append to the sheet
+  sheet_id <- "1XvwU5RxdHTjB_kiEZeGXBxE_3s46905HjsPilRfMZ2g"
+  sheet_name <- "raw_data"
+  
+  # Find the sheet or create a new one
+  ss <- gs4_find(sheet_name)
+  if (is.null(ss)) {
+    ss <- gs4_create(sheet_name)
+    sheet_write(response_data, ss = ss, sheet = sheet_name)
+  } else {
+    # Append the data to the sheet
+    sheet_append(ss, response_data)
+  }
   })
 }
 
 # Here is our app
 shinyApp(ui, server)
+

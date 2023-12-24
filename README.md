@@ -11,6 +11,7 @@
 - [Group Decision Fiascoe: Space Shuttle Challenger](10.1177/001872679104400601)
 - [Helpful doc for understanding git](https://dangitgit.com/)
 - [Understanding the matrix stuff](https://rdrr.io/cran/shinysurveys/man/radioMatrixInput.html)
+- [Google Sheets Package](https://googlesheets4.tidyverse.org/)
 
 ## 
 
