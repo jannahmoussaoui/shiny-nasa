@@ -1,5 +1,15 @@
 library(shiny)
 library(tibble)
+library(shinyjs)
+library(googlesheets4)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+gs4_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
+
+app <- "http://jannahmoussaoui.shinyapps.io/NASA_Survey"
+user <- "/?user_id="
 
 # Define UI
 ui <- navbarPage(
@@ -14,18 +24,23 @@ ui <- navbarPage(
              HTML("<h3>Session name</h3>"),
              textInput("session_name", "What do you want to name this session? We recommend using something relatively unique to distinguish this session from others.", placeholder = "e.g., course CRN"),
              HTML("<h3>Participant names</h3>"),
-             textInput("participant_names", "Please list the names of all the people who will be participating in this activity. Separate names with commas.", placeholder = "e.g., Jannah, Fatima, Ahmed, Aminah...")
+             textInput("participant_names", "Please list the names of all the people who will be, participating in this activity. Separate names with commas.", placeholder = "e.g., Jannah, Fatima, Ahmed, Aminah...")
     ),
     tabPanel("Step 2",
              HTML("<h3>Instructions</h3>
-                  <p>Everyone will be completing this activity twice: first individually and then within a group. We have already grouped everyone up, as seen in the table below.</p>
-                  <p>Individiually, go to: <a href='http://jannahmoussaoui.shinyapps.io/NASA_Survey'>http://jannahmoussaoui.shinyapps.io/NASA_Survey</a></p>
-                  <p>You will need to indicate the session name and the group you have been assigned. You may come up with whatever alias you'd like. This label will be displayed on a graph later.</p>
-                  <p>Once everyone has completed the task by themselves, you may group up. Then, on one device, complete the survey one more time. Be sure to discuss with your group members! </p>
+                  <p>Everyone will be completing this activity twice: first individually and then within a group. We have already grouped everyone up, as seen in the table below. Remember 
+                  the group to which you have been assigned as you will need to provide this in the survey.</p>
+                  <p>Once everyone has completed the task by themselves, you may group up and complete the activity a second time, albeit with the ability to consult group members.</p>
                   <h3>Groups</h3>"),
-             tableOutput("groupTable")
+             tableOutput("groupTable"),
+             HTML("<h3>Activity Link</h3>
+                  <p>To access the activity, follow the link below."),
+             htmlOutput("surveyLink")
     ),
-    tabPanel("Step 3")
+    tabPanel("Step 3",
+             actionButton("generateResultsBtn", "Generate Results"),
+             tableOutput("generatedResults")
+    )
   ),
   theme = bslib::bs_theme(bootswatch = "darkly")
 )
@@ -45,13 +60,23 @@ server <- function(input, output, session) {
     }
   })
   
+  observeEvent(input$session_name, {
+    # Create the survey link when the session_name is provided
+    if (!is.null(input$session_name)) {
+      link <- paste0(app, user, input$session_name)
+      output$surveyLink <- renderUI({
+        HTML(paste(tags$a(href = link, target = "_blank", link)))
+      })
+    }
+  })
+  
   observeEvent(input$participant_names, {
     # Generate groups when the session_name is provided
     if (!is.null(session_members()) && length(session_members()) >= 3) {
       participants <- session_members()
       num_participants <- length(participants)
       
-      # Group size range
+      # Group size range,
       group_size <- 3
       
       # Calculate the number of participants to assign to each group
@@ -83,6 +108,29 @@ server <- function(input, output, session) {
         result
       }, striped = TRUE, hover = TRUE)
     }
+  })
+  
+  observeEvent(input$generateResultsBtn, {
+    # Load data from Google Sheets
+    raw_data <- read_sheet("1XvwU5RxdHTjB_kiEZeGXBxE_3s46905HjsPilRfMZ2g")
+    raw_data <- raw_data[, !names(raw_data) %in% "question_type"]
+    
+    raw_data_wide <- raw_data %>%
+      pivot_wider(
+        names_from = question_id,
+        values_from = response,
+        values_fn = list(response = list)
+      ) %>%
+      unnest(cols = c(individual, group, code_name, matches, food, nylon, silk, heating, pistol, milk, oxygen, map, raft, compass, water, flare, injection, receiver)) %>%
+      select(code_name, everything()) %>%
+      rename(session = subject_id)
+    
+    session_raw_data_wide <- dplyr::filter(raw_data_wide, session == input$session_name)
+    
+    # Display the result in the Shiny app
+    output$generatedResults <- renderTable({
+      session_raw_data_wide
+    }, striped = TRUE, hover = TRUE)
   })
 }
 

@@ -213,7 +213,10 @@ df18 <- data.frame(question = "Solar-powered FM receiver-transmitter",
 
 
 
-df <- bind_rows(df1, df2, df3, df4, df5, df6, df7, df8, df9, df10, df11, df12, df13, df14, df15, df16, df17, df18)
+df <- bind_rows(df1, df2, df3, df4, df5, df6, df7, df8, df9, df10, df11, df12, df13, df14, df15, df16, df17, df18) 
+
+# Would've been more efficient to use matrix and build one df with c(rep(c)) but matrix seems to greak
+## getSurveyData() so I did it the long way...
 
 
 
@@ -222,7 +225,14 @@ df <- bind_rows(df1, df2, df3, df4, df5, df6, df7, df8, df9, df10, df11, df12, d
 ui <- fluidPage(
   surveyOutput(df,
                survey_title = "NASA Exercise: Survival on the Moon",
-               survey_description = "You are a member of a space crew originally scheduled to rendezvous with a mother ship on the lighted surface of the moon. However, due to mechanical difficulties, your ship was forced to land at a spot some 200 miles from the rendezvous point. During reentry and landing, much of the equipment aboard was damaged and, since survival depends on reaching the mother ship, the most critical items available must be chosen for the 200-mile trip. Below are listed the 15 items left intact and undamaged after landing. Your task is to rank order them in terms of their importance for your crew in allowing them to reach the rendezvous point. Place the number 1 by the most important item, the number 2 by the second most important, and so on through number 15 for the least important",
+               survey_description = "You are a member of a space crew originally scheduled to rendezvous with a mother 
+               ship on the lighted surface of the moon. However, due to mechanical difficulties, your ship was forced to land at 
+               a spot some 200 miles from the rendezvous point. During reentry and landing, much of the equipment aboard was 
+               damaged and, since survival depends on reaching the mother ship, the most critical items available must be chosen
+               for the 200-mile trip. Below are listed the 15 items left intact and undamaged after landing. Your task is to rank 
+               order them in terms of their importance for your crew in allowing them to reach the rendezvous point. Place the 
+               number 1 by the most important item, the number 2 by the second most important, and so on through number 15 for
+               the least important",
                theme = "#000000")
 )
 
