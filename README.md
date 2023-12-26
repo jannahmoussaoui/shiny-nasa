@@ -2,6 +2,7 @@
 **Contributors:** Jannah R. Moussaoui & Jason S. McCarley
 
 **Objective:** The goal of this project is create a shiny app that provides an activity to demonstrate the normativity of decisions made in solitude, within groups, and through the wisdom of crowds.
+
 **Link:** [Shiny App Demo](https://jannahmoussaoui.shinyapps.io/demo/)
 
 ## Helpful resources

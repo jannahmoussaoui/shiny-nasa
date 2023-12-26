@@ -30,7 +30,7 @@ drive_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 ## ShinySurveys expects these to be in a data frame
 ## There's a way to do this with matrix-ing and an actual matrix input
 ## But for whatever reason, it renders the getSurvetData() function useless
-## So I will just bing a bunch of dataframes together...it's inefficient but it works
+## So I will just bind a bunch of dataframes together...it's inefficient but it works
 
 df1 <- data.frame(question = "Are you completing this as an individual or with a group?",
                   option = t(c("Individual", "Group")),
