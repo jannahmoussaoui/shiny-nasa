@@ -16,7 +16,8 @@ gs4_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 
 # Link to the live survey
 app <- "https://jannahmoussaoui.shinyapps.io/survey/"
-user <- "/?user_id="
+app_no <- "A link will be available once you provide a name for the session."
+user <- "?user_id="
 
 ############################################################################################################################################################
 
@@ -54,8 +55,7 @@ ui <- navbarPage(
              tableOutput("groupTable"),
              HTML("<br></br>
                   <h4>Step 5: Complete the acitvity individually.</h4>
-                  <p>The link below will redirect you to the NASA Moon Survival Task. Follow the instructions provided in the link. For this first round,
-                  please work quietly and independently.</p>"),
+                  <p>The link below will redirect you to the NASA Moon Survival Task. Follow the instructions provided in the link.</p>"),
              htmlOutput("surveyLink"),
              HTML("<br></br>
                   <h4>Step 6: Getting into groups</h4>
@@ -75,26 +75,34 @@ ui <- navbarPage(
 
 # Define server
 server <- function(input, output, session) {
-# Create the survey link when the session_name is provided
+# Create the survey link when the session_name is provided; need an if else because 
+## we don't want to direct to the link if the session_name is empty
   observeEvent(input$session_name, {
-    if (!is.null(input$session_name)) {
+    if (!is.null(input$session_name) && input$session_name !="") {
       link <- paste0(app, user, input$session_name)
+    } else {
+      link <- app_no
+    }
       output$surveyLink <- renderUI({
         HTML(paste(tags$a(href = link, target = "_blank", link)))
       })
-    }
   })
+  
 # Duplicating the lines above because for whatever reason when we try to print the htmlOutput 
 ## in the ui section it interrupts the other outputs. If we decide we want to build a different
 ## survey for groups vs. individuals (and remove the MC item), we can make the links different
+## not doing that now bc it involves a lot more lines of code than its worth for removing 1 MC item
   observeEvent(input$session_name, {
-    if (!is.null(input$session_name)) {
+    if (!is.null(input$session_name) && input$session_name !="") {
       link <- paste0(app, user, input$session_name)
-      output$surveyLink2 <- renderUI({
-        HTML(paste(tags$a(href = link, target = "_blank", link)))
-      })
+    } else {
+      link <- app_no
     }
+    output$surveyLink2 <- renderUI({
+      HTML(paste(tags$a(href = link, target = "_blank", link)))
+    })
   })
+  
   
 # We're going to write a function to divide people into groups
   divide_names_into_groups <- function(names, num_groups) {
@@ -165,7 +173,7 @@ server <- function(input, output, session) {
     ############################################################
     # reshape the data to re-use Jason's code
     ## pasted in the sections we want
-    dat <- session_raw_data_wide %>% # If manually testing the code, i.e., not launching shiny, drop "session_" and reference "raw_data_wide" here
+    dat <- session_raw_data_wide %>% # If manually testing the code, i.e., not launching shiny, drop "session_" and reference "raw_data_wide" here #############################################################
       rename(ID = code_name) %>%
       rename(Source = individual) %>%
       rename(Group = group) %>%
@@ -196,16 +204,17 @@ server <- function(input, output, session) {
     # aggregate scores using the Borda method
     ## just just requires us to average the item rankings from individuals,
     ## then convert those to ranks
-    Borda <- dat %>% group_by(Group, item) %>% 
+    Borda <- dat %>% 
+      group_by(Group, item) %>% 
       summarize(M = mean(value)) %>% 
       ungroup() 
-    Borda %<>% reframe (Group, item, value = rank(M), by = Group)
+    Borda %<>% reframe (Group, item, value = rank(M), by = Group) 
     
     # calculate error scors for Borda rankings, then get group averages
     Borda %<>% mutate(true_score = !!true_scores[Borda$item], error = abs(value - true_score))
     Borda %<>% group_by(Group) %>% 
-      summarize(abs_error = mean(error))%>% 
-      mutate(Source = "Aggregate") 
+     summarize(abs_error = mean(error))%>% 
+     mutate(Source = "Aggregate") 
     
     # combined data will hold individual, group, and aggregate scores
     ## get summed error score by source, group, and ID
@@ -221,6 +230,25 @@ server <- function(input, output, session) {
                                 fct_relevel( "Individual", "Group", "Aggregate"))
     combined_data %<>% mutate(ID_label = if_else(Source == "Individual", ID, ""))
     
+    ############################################################################################
+    # Make one tweak to Jason's code
+    ## Remove aggregate (so it doesn't plot) for groups comprised solely of 1 person
+    combined_data <- combined_data %>%
+      group_by(Source, Group) %>%
+      mutate(
+        num_per_group = n_distinct(ID),
+        num_per_source = paste(num_per_group, Source, sep = "_")
+      ) %>%
+      ungroup()
+    
+    combined_data <- combined_data %>%
+      group_by(Group) %>%
+      filter(!(any(num_per_source == "1_Individual") & Source == "Aggregate")) %>%
+      ungroup()
+
+    #############################################################################################
+    
+    # draw the plot
     draw_plot <- ggplot(combined_data, aes(x = Group, y = abs_error, fill = Source, group = ID)) +
       geom_bar(stat = "identity", position = position_dodge(.8), width = 0.75, alpha = .5, color = "lightgray") +
       geom_point(stat = "identity", aes(fill = Source), position = position_dodge(.8), shape = 21,  size = 3, show.legend = FALSE) +
@@ -233,7 +261,7 @@ server <- function(input, output, session) {
             legend.title = element_blank(), 
             legend.text = element_text(size = 12),
             plot.title = element_text(hjust = 0.5, size = 15)) +
-      coord_cartesian(ylim = c(0, 125))
+      coord_cartesian(ylim = c(0, 145))
     
     # Going to use this to display the result in the Shiny app as ggplot
     output$plotResults <- renderPlot({
@@ -244,3 +272,4 @@ server <- function(input, output, session) {
 
 # Run the app
 shinyApp(ui, server)
+

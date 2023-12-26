@@ -2,6 +2,7 @@
 **Contributors:** Jannah R. Moussaoui & Jason S. McCarley
 
 **Objective:** The goal of this project is create a shiny app that provides an activity to demonstrate the normativity of decisions made in solitude, within groups, and through the wisdom of crowds.
+**Link:** [Shiny App Demo](https://jannahmoussaoui.shinyapps.io/demo/)
 
 ## Helpful resources
 - [NASA Moon Survival Task](https://www.csuchico.edu/anthmuseum/_assets/documents/nasa-exercise-survival-on-the-moon.pdf)
@@ -18,7 +19,7 @@
 - [User interface: Layouts + Themes + HTML/CSS](https://mastering-shiny.org/action-layout.html)
 
 
-## (Overly ambitious) Future Directions
+## Future Additions
 - Add de-biasing strategies (e.g., pre-mortem)
 - Add a way to get at the wisdom of very big crowds
 

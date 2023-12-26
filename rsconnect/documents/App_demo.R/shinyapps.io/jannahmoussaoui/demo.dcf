@@ -5,7 +5,7 @@ account: jannahmoussaoui
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 10845971
-bundleId: 8083587
+bundleId: 8085069
 url: https://jannahmoussaoui.shinyapps.io/demo/
 version: 1
 asMultiple: FALSE
