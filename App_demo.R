@@ -15,48 +15,50 @@ gs4_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 ############################################################################################################################################################
 
 # Link to the live survey
-app <- "https://jannahmoussaoui.shinyapps.io/nasa/"
+app <- "https://jannahmoussaoui.shinyapps.io/survey/"
 user <- "/?user_id="
 
 ############################################################################################################################################################
 
 # Define UI
 ui <- navbarPage(
-  "Group JDM Demo", # This will be the title on the tab we open
+  "Demo", # This will be the title on the tab we open
   tabsetPanel(
-    tabPanel("Getting Started",
-             HTML("<h3>Introduction</h3>
+    tabPanel("Introduction",
+             HTML("<h4>Background</h4>
                   <p>Making decisions, especially under certainty, is challenging. Sometimes, we might decide to ask others for advice. 
                   But is this the best approach? This shiny app recreates the procedures employed by Hamada et al. (2020) to provide an
                   interactive demonstration comparing the normativity of decisions when made individually, in groups, and through the 
                   wisdom of crowds. To do this, everyone will complete a short activity called the 'NASA Exercise: Survival on the Moon'
                   by themselves. Then, we'll split everyone into groups and have everyone complete the task again. Please note that this 
-                  activity was designed to be implemented in a synchronous classroom setting but can likely be adapted to work in other contexts.</p>"),
+                  activity was designed to be implemented in a synchronous classroom setting but can likely be adapted to work in other contexts.</p>
+                  <br></br>
+                  <h4>How to Cite This</h4>"),
     ),
-    tabPanel("Setting Up",
-             HTML("<h3>Step 1: Come up with a session name</h3>
+    tabPanel("Instructions",
+             HTML("<h4>Step 1: Come up with a session name</h4>
                   <p>First, we need to pick out a relatively unique name for this session. This will allow us to send everyone to the same link.</p>"),
              textInput("session_name", "Session Name:", placeholder = "e.g., course CRN"),
              HTML("<br></br>
-                  <h3>Step 2: List out the particiapnts</h3>
+                  <h4>Step 2: List out the particiapnts</h4>
                   <p>Now, we need to know how many people are going to complete this activity. We'll use this list to help divide people into groups.
                   <b>Separate names with commas.</b></p>"),
              textInput("participant_names", "Participants:", width = "50%", placeholder = "e.g., Jannah, Jason..."),
              HTML("<br></br>
-                  <h3>Step 3: Number of Groups</h3>
+                  <h4>Step 3: Number of Groups</h4>
                   <p>This activity works best with groups of 3-4 people but we can make groups as big or as small as we like."),
              sliderInput("num_groups", "Number of Groups:",
                          min = 1, max = 3, value = 2),  # Set an initial max value just to satisfy the function. This basically gets overwritten instantly
              HTML("<br></br>
-                  <h3>Step 4: View groups</h3>"),
+                  <h4>Step 4: View groups</h4>"),
              tableOutput("groupTable"),
              HTML("<br></br>
-                  <h3>Step 5: Complete the acitvity individually.</h3>
+                  <h4>Step 5: Complete the acitvity individually.</h4>
                   <p>The link below will redirect you to the NASA Moon Survival Task. Follow the instructions provided in the link. For this first round,
                   please work quietly and independently.</p>"),
              htmlOutput("surveyLink"),
              HTML("<br></br>
-                  <h3>Step 6: Getting into groups</h3>
+                  <h4>Step 6: Getting into groups</h4>
                   <p>Once everyone has completed the survey, get into groups and designate one device for recording the responses. You'll notice the link 
                   is the same. Be sure to indicate that you are completing this as a group!</p>"),
              htmlOutput("surveyLink2")
