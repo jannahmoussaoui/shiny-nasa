@@ -223,21 +223,34 @@ server <- function(input, output, session) {
     dat$item <- as.numeric(dat$item)
     
     # create a column of error scores
+    ## also count N per group
     dat %<>% mutate(true_score = !!true_scores[dat$item], abs_error = abs(value - true_score))
+    num_per_group <- dat %>%
+      filter(Source == "Individual") %>%
+      group_by(Group) %>%
+      summarize(num_per_group = n_distinct(ID))
     
     # aggregate scores using the Borda method
     ## just requires us to average the item rankings from individuals,
     ## then convert those to ranks
-    Borda <- dat %>% 
+    ## But first, let's only do this for N /group =/= 1
+    Borda <- dat %>%
+      left_join(num_per_group, by = "Group") %>%
+      mutate(num_per_group = coalesce(num_per_group, 1)) %>%
+      filter(!num_per_group == 1) %>%
+      filter(!Source == "Group") %>% 
       group_by(Group, item) %>% 
       summarize(M = mean(value)) %>% 
-      ungroup() 
-    Borda %<>% reframe (Group, item, value = rank(M), by = Group) 
+      ungroup() %>%
+      group_by(Group) %>% 
+      mutate(value = rank(M, ties.method = "last")) %>% 
+      ungroup()
+    Borda %<>% reframe(Group, item, value)
     
     # calculate error scores for Borda rankings, then get group averages
     Borda %<>% mutate(true_score = !!true_scores[Borda$item], error = abs(value - true_score))
     Borda %<>% group_by(Group) %>% 
-     summarize(abs_error = mean(error))%>% 
+     summarize(abs_error = sum(error))%>% 
      mutate(Source = "Aggregate") 
     
     # combined data will hold individual, group, and aggregate scores
