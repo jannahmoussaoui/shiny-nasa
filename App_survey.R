@@ -68,174 +68,33 @@ df3 <- data.frame(question = "What secret alias would you like to use? This will
                   dependence_value = NA,
                   required = TRUE) 
 
-df4 <- data.frame(question = "Rank the item: Box of matches",
-                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                  input_type = "select",
-                  input_id = "matches",
-                  dependence = NA,
-                  dependence_value = NA,
-                  required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option") 
+df4 <- data.frame(
+  question = rep(
+    c(
+      "Box of matches", "Food concentrate", "Fifty feet of nylon rope",
+      "Parachute silk", "Portable heating unit", "Two .45 caliber pistol",
+      "One case of dehydrated milk", "Two 100 lb. tanks of oxygen",
+      "Stellar map", "Self-inflating life raft", "Magnetic compass",
+      "Twenty liters of water", "Signal flares",
+      "First aid kit, including injection needle",
+      "Solar-powered FM receiver-transmitter"
+    ), each = 15
+  ),
+  option = rep(
+    c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"), times = 15
+  ),
+  input_type = rep("matrix", 225),
+  input_id = rep(
+    paste("nasa_matrix", rep(1:15, each = 15)), times = 15
+  ),
+  dependence = NA,
+  dependence_value = NA,
+  required = TRUE
+)
 
-df5 <- data.frame(question = "Rank the item: Food Concentrate",
-                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                  input_type = "select",
-                  input_id = "food",
-                  dependence = NA,
-                  dependence_value = NA,
-                  required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option") 
-
-df6 <- data.frame(question = "Rank the item: 50 feet of nylon rope",
-                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                  input_type = "select",
-                  input_id = "nylon",
-                  dependence = NA,
-                  dependence_value = NA,
-                  required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option") 
-
-df7 <- data.frame(question = "Rank the item: Parachute silk",
-                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                  input_type = "select",
-                  input_id = "silk",
-                  dependence = NA,
-                  dependence_value = NA,
-                  required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option") 
-
-df8 <- data.frame(question = "Rank the item: Portable heating unit",
-                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                  input_type = "select",
-                  input_id = "heating",
-                  dependence = NA,
-                  dependence_value = NA,
-                  required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option") 
-
-df9 <- data.frame(question = "Rank the item: Two .45 caliber pistol",
-                  option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                  input_type = "select",
-                  input_id = "pistol",
-                  dependence = NA,
-                  dependence_value = NA,
-                  required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option")
-
-df10 <- data.frame(question = "Rank the item: One case of dehydrated milk",
-                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                   input_type = "select",
-                   input_id = "milk",
-                   dependence = NA,
-                   dependence_value = NA,
-                   required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option")
-
-df11 <- data.frame(question = "Rank the item: Two 100 lb. tanks of oxygen",
-                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                   input_type = "select",
-                   input_id = "oxygen",
-                   dependence = NA,
-                   dependence_value = NA,
-                   required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option")
-
-df12 <- data.frame(question = "Rank the item: Stellar map",
-                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                   input_type = "select",
-                   input_id = "map",
-                   dependence = NA,
-                   dependence_value = NA,
-                   required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option")
-
-df13 <- data.frame(question = "Rank the item: Self-inflating life raft",
-                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                   input_type = "select",
-                   input_id = "raft",
-                   dependence = NA,
-                   dependence_value = NA,
-                   required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option")
-
-df14 <- data.frame(question = "Rank the item: Magnetic compass",
-                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                   input_type = "select",
-                   input_id = "compass",
-                   dependence = NA,
-                   dependence_value = NA,
-                   required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option")
-
-df15 <- data.frame(question = "Rank the item: 20 liters of water",
-                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                   input_type = "select",
-                   input_id = "water",
-                   dependence = NA,
-                   dependence_value = NA,
-                   required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option")
-
-
-df16 <- data.frame(question = "Rank the item: Signal flares",
-                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                   input_type = "select",
-                   input_id = "flare",
-                   dependence = NA,
-                   dependence_value = NA,
-                   required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option")
-
-df17 <- data.frame(question = "Rank the item: First aid kit, including injection needle",
-                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                   input_type = "select",
-                   input_id = "injection",
-                   dependence = NA,
-                   dependence_value = NA,
-                   required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option")
-
-df18 <- data.frame(question = "Rank the item: Solar-powered FM receiver-transmitter",
-                   option = t(c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")),
-                   input_type = "select",
-                   input_id = "receiver",
-                   dependence = NA,
-                   dependence_value = NA,
-                   required = TRUE
-)  %>%
-  pivot_longer(cols = starts_with("option"),
-               values_to = "option")
 
 # Now we put them together
-df <- bind_rows(df1, df2, df3, df4, df5, df6, df7, df8, df9, df10, df11, df12, df13, df14, df15, df16, df17, df18) 
+df <- bind_rows(df1, df2, df3, df4) 
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
 #-------DEFINE THE UI

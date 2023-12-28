@@ -180,7 +180,28 @@ server <- function(input, output, session) {
   observeEvent(input$plotResultsBtn, {
     # Load data from Google Sheets
     raw_data <- read_sheet("1XvwU5RxdHTjB_kiEZeGXBxE_3s46905HjsPilRfMZ2g") # Google sheet ID. To recreate the app, replace with a diff ID
-    raw_data <- raw_data[, !names(raw_data) %in% "question_type"]
+    raw_data <- raw_data[, !names(raw_data) %in% "question_type"] #%>%
+    raw_data <- raw_data %>%
+      mutate(
+        question_id = case_when(
+          question_id == "box_of_matches" ~ "matches",
+          question_id == "food_concentrate" ~ "food",
+          question_id == "fifty_feet_of_nylon_rope" ~ "nylon",
+          question_id == "parachute_silk" ~ "silk",
+          question_id == "portable_heating_unit" ~ "heating",
+          question_id == "two_45_caliber_pistol" ~ "pistol",
+          question_id == "one_case_of_dehydrated_milk" ~ "milk",
+          question_id == "two_100_lb_tanks_of_oxygen" ~ "oxygen",
+          question_id == "stellar_map" ~ "map",
+          question_id == "selfinflating_life_raft" ~ "raft",
+          question_id == "magnetic_compass" ~ "compass",
+          question_id == "twenty_liters_of_water" ~ "water",
+          question_id == "signal_flares" ~ "flare",
+          question_id == "first_aid_kit_including_injection_needle" ~ "injection",
+          question_id == "solarpowered_fm_receivertransmitter" ~ "receiver",
+          TRUE ~ question_id
+        )
+      )
     
     raw_data_wide <- raw_data %>%
       pivot_wider(
@@ -191,6 +212,11 @@ server <- function(input, output, session) {
       unnest(cols = c(individual, group, code_name, matches, food, nylon, silk, heating, pistol, milk, oxygen, map, raft, compass, water, flare, injection, receiver)) %>%
       select(code_name, everything()) %>%
       rename(session = subject_id)
+    
+    # In case people hit submit twice, we want to remove duplicate scores
+    ## Otherwise, their  error score will be doubled/tripled/etc...
+    raw_data_wide <- raw_data_wide %>%
+      distinct()
     
     session_raw_data_wide <- dplyr::filter(raw_data_wide, session == input$session_name) # important because it hides the rest of the (non-session-relevant) data; if manually testing the code, comment this out
     
@@ -329,7 +355,7 @@ server <- function(input, output, session) {
                              Ranking=c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"),
                              Reasoning=c("Most pressing survival need (weight is not a factor since gravity is one-sixth of the Eath's--each tank would weigh only about 17lbs. on the moon",
                                               "Needed for replacement of tremendous liquid loss on the light side", "Primary means of navigation - star patterns appear essentially identical on the moon as on Earth", 
-                                              "Efficient means of supplying every requirements", "For communication with mother ship (but FM requires line-of-sight transmission and can only be used over short ranges", 
+                                              "Efficient means of supplying every requirements", "For communication with mother ship (but FM requires line-of-sight transmission and can only be used over short ranges)", 
                                               "Useful in scaling cliffs and tying injured together", "Needles connected to vials of vitamins, medicines, etc. will fit special aperture in NASA space suit",
                                               "Protection from the sun's rays", "CO2 bottle in military raft may be used for propulsion", "Use as distress signal when the mother ship is sighted", 
                                               "Possible means of self-propulsion", "Bulkier duplication of food concetrate", "Not needed unless on the dark side", 
