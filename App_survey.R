@@ -15,7 +15,7 @@ library(googledrive)
 
 # We need to authenticate with a token to access Google API
 ## In console:
-## setwd(app_directory_here)
+## setwd(your/directory/here)
 ## gs4_auth(email = "jannahmoussaoui@gmail.com", cache = ".secrets")
 ## A .secrets repo will be created. Don't git commit this!
 ## Replace below with your own email

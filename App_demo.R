@@ -16,7 +16,8 @@ library(tidyverse)
 
 ############################################################################################################################################################
 
-# this assumes you have .secrets in the same directory and therefore don't need to reauthenticate (assuming you ran App_survey.R first)
+# this assumes you have .secrets in the same directory and therefore don't need to reauthenticate 
+## (assuming you ran App_survey.R first)
 gs4_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 
 ############################################################################################################################################################
