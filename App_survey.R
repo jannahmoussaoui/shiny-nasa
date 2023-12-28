@@ -8,6 +8,11 @@ library(googledrive)
 
 ############################################################################################################################################################
 
+# The components of a shiny surveys are just the data.frame for question + user interface + the server functions + a call to the shinyApp function
+# I use hashtags to break apart mini-sections like this, and dashes to break apart where we define the ui and server
+
+############################################################################################################################################################
+
 # We need to authenticate with a token to access Google API
 ## In console:
 ## setwd(app_directory_here)
@@ -24,13 +29,17 @@ options(
 gs4_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 drive_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 
-############################################################################################################################################################
+#----------------------------------------------------------------------------------------------------------------------------------------------------------
+#-------DEFINE THE QUESTIONS
 
 # Create questions
 ## ShinySurveys expects these to be in a data frame
-## There's a way to do this with matrix-ing and an actual matrix input
+## I will just bind a bunch of dataframes together...it's inefficient but it works
+## As a sidenote, I wanted to use matrix input for the NASA questions
 ## But for whatever reason, it renders the getSurvetData() function useless
-## So I will just bind a bunch of dataframes together...it's inefficient but it works
+## and I couldn't find documentation on git or the package developer
+## there have been no updates to the git page or requests, so I'm a little worried
+## shinysurveys has been abandoned
 
 df1 <- data.frame(question = "Are you completing this as an individual or with a group?",
                   option = t(c("Individual", "Group")),
@@ -228,9 +237,9 @@ df18 <- data.frame(question = "Rank the item: Solar-powered FM receiver-transmit
 # Now we put them together
 df <- bind_rows(df1, df2, df3, df4, df5, df6, df7, df8, df9, df10, df11, df12, df13, df14, df15, df16, df17, df18) 
 
-########################################################################################################################################################
-# Define the user interface
-## Use survey_description for select question
+#----------------------------------------------------------------------------------------------------------------------------------------------------------
+#-------DEFINE THE UI
+
 ui <- fluidPage(
   surveyOutput(df,
                survey_title = "NASA Exercise: Survival on the Moon",
@@ -244,8 +253,9 @@ ui <- fluidPage(
                the least important",
                theme = "#000000")
 )
-########################################################################################################################################################
-## Define the server
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------
+#-------DEFINE THE UI
 server <- function(input, output, session) {
   renderSurvey()
   observeEvent(input$submit, {
@@ -271,6 +281,7 @@ server <- function(input, output, session) {
   })
 }
 
-# Here is our app
+#----------------------------------------------------------------------------------------------------------------------------------------------------------
+#-------CALL SHINYAPP FUNCTION
 shinyApp(ui, server)
 

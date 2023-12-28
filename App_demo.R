@@ -5,13 +5,20 @@ library(googlesheets4)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
-library(tidyverse)
 library(magrittr)
 library(cowplot)
+library(tidyverse)
 
 ############################################################################################################################################################
-# this assumes you have .secrets in the same directory and therefore don't need to reauthenticate
+
+# The components of a shiny app are just the user interface + the server functions + a call to the shinyApp function
+# I use hashtags to break apart mini-sections like this, and dashes to break apart where we define the ui and server
+
+############################################################################################################################################################
+
+# this assumes you have .secrets in the same directory and therefore don't need to reauthenticate (assuming you ran App_survey.R first)
 gs4_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
+
 ############################################################################################################################################################
 
 # Link to the live survey
@@ -19,23 +26,22 @@ app <- "https://jannahmoussaoui.shinyapps.io/survey/"
 app_no <- "A link will be available once you provide a name for the session."
 user <- "?user_id="
 
-############################################################################################################################################################
+#----------------------------------------------------------------------------------------------------------------------------------------------------------
+#-------DEFINE THE UI
 
-# Define UI
 ui <- navbarPage(
-  "Demo", # This will be the title on the tab we open
+  "Demo", # This will be the title of the tab we open.
   tabsetPanel(
     tabPanel("Introduction",
              HTML("<br>
              <h5><b>Background</b></h5>
-                  <p>Making decisions, especially under certainty, is challenging. Sometimes, we might decide to ask others for advice. 
-                  But is this the best approach? This shiny app recreates the procedures employed by Hamada et al. (2020) to provide an
-                  interactive demonstration comparing the normativity of decisions when made individually, in groups, and through the 
-                  wisdom of crowds. To do this, everyone will complete a short activity called the 'NASA Exercise: Survival on the Moon'
-                  by themselves. Then, we'll split everyone into groups and have everyone complete the task again. Please note that this 
-                  activity was designed to be implemented in a synchronous classroom setting but can likely be adapted to work in other contexts.</p>
+                  <p>Making decisions, especially under uncertainty, is challenging. Sometimes, to aid our decision making, we might solicit advice from others
+                  or even make decisions collaboratively. In this activity, we provide a demonstration of individual and group decision making on an unfamiliar
+                  task, the NASA Exercise, which presents a moon-based survival task. As in Hamada et al. (2020), we invite people to complete this task first
+                  individually and then in groups.</p>
+                  <p>Please note that this activity was designed to be implemented in a synchronous classroom setting.</p>
                   <br>
-                  <h5><b>Source Code</b></h5>
+                  <h5><b>Source</b></h5>
                   <p>https://github.com/jannahmoussaoui/shiny-nasa</p>"),
     ),
     tabPanel("Instructions",
@@ -61,25 +67,36 @@ ui <- navbarPage(
                   <p>The link below will redirect you to the NASA Moon Survival Task. Follow the instructions provided in the link.</p>"),
              htmlOutput("surveyLink"),
              HTML("<br>
-                  <h5><b>Step 6: Getting into groups</b></h5>
+                  <h5><b>Step 6: Get into groups</b></h5>
                   <p>Once everyone has completed the survey, get into groups and designate one device for recording the responses. You'll notice the link 
                   is the same. Be sure to indicate that you are completing this as a group!</p>"),
-             htmlOutput("surveyLink2")
+             htmlOutput("surveyLink2"),
+             HTML("<br>
+                  <h5><b>Step 7: View the results</b></h5>
+                  <p>Now that everyone has submitted the surveys indiviudally and again in their groups, we can plot the results. Navigate to the tab labelled 'results'</p>")
     ),
-    tabPanel("See the results",
+    tabPanel("Results",
+             HTML("<br>"),
              actionButton("plotResultsBtn", "Plot the results"),
-             plotOutput("plotResults")
+             plotOutput("plotResults"),
+             actionButton("plotScoreKeyBtn", "NASA's Error Score Interpretation"),
+             tableOutput("plotScoreKey"),
+             HTML("<br>"),
+             actionButton("plotAnswerKeyBtn", "NASA's Answers and Explanation"),
+             tableOutput("plotAnswerKey")
     )
   ),
   theme = bslib::bs_theme(bootswatch = "sandstone")
 )
 
-############################################################################################################################################################
+#----------------------------------------------------------------------------------------------------------------------------------------------------------
+#-------DEFINE the server
 
-# Define server
 server <- function(input, output, session) {
-# Create the survey link when the session_name is provided; need an if else because 
-## we don't want to direct to the link if the session_name is empty
+
+# SESSION NAME + SURVEY LINK ###########################################################################################################################################################
+# Create the survey link when the session_name is provided; using an if else
+## to force people to pick a session_name
   observeEvent(input$session_name, {
     if (!is.null(input$session_name) && input$session_name !="") {
       link <- paste0(app, user, input$session_name)
@@ -89,11 +106,10 @@ server <- function(input, output, session) {
       output$surveyLink <- renderUI({
         HTML(paste(tags$a(href = link, target = "_blank", link)))
       })
-  })
-  
+  }) 
 # Duplicating the lines above because for whatever reason when we try to print the htmlOutput 
 ## in the ui section it interrupts the other outputs. If we decide we want to build a different
-## survey for groups vs. individuals (and remove the MC item), we can make the links different
+## survey for groups vs. individuals (and remove the yes/no item), we can make the links different
 ## not doing that now bc it involves a lot more lines of code than its worth for removing 1 MC item
   observeEvent(input$session_name, {
     if (!is.null(input$session_name) && input$session_name !="") {
@@ -105,42 +121,44 @@ server <- function(input, output, session) {
       HTML(paste(tags$a(href = link, target = "_blank", link)))
     })
   })
-  
-  
-# We're going to write a function to divide people into groups
+
+# MAKING GROUPS ###########################################################################################################################################################
+
+  # We're going to write a function to divide people into groups
+## First, shuffle the names so that we're randomly putting people in groups
+## Use integer division %/% to figure out the minimum number of participants in each group (the quotient)
+## It's likely things won't divide perfectly so calculate the remainder with modulus %%
+## Create an empty list to store groups. We'll need this "container" so the for loop can assign people to the corresponding groups
+## We're going to loop to create each of our groups, so we need to keep track of our position on the original list
+## so we'll use current_position and start indexing at 1 to do this
+## On our first iteration, the group at the minimum will have n = quotient, and if the iteration is <= remainder, we add 1
+## if the iteration (1) is greater than the remainder (0), there are no remainders, and we add 0
+## Once we know the group size, we can assign names
+## Then we update our current position so that the next iteration starts in the right spot
   divide_names_into_groups <- function(names, num_groups) {
-    # Use sample to ensure people's group assignment is random
     shuffled_names <- sample(names)
-    # Use integer division %/% to figure out the minimum number of participants in each group
     group_size <- length(shuffled_names) %/% num_groups
-    # It's likely things won't divide perfectly so calculate the remainder
     remainder <- length(shuffled_names) %% num_groups
-    # Create an empty list to store groups. We'll need this "container" so the for loop can assign people to the corresponding groups
     groups <- vector("list", length = num_groups)
-    # To figure out when we've finished distributing the remainders, we need to track our current position. Start at 1
     current_position <- 1
-    # We will use a for loop over the groups
     for (i in 1:num_groups) {
-      # If i <= remainder, we're dealing with a group that should get an additional member. Otherwise, we've moved past the initial groups and add 0.
       current_size <- group_size + ifelse(i <= remainder, 1, 0)
-      # Assign names using our shuffled vector
       groups[[i]] <- shuffled_names[current_position:(current_position + current_size - 1)] # we started at 1 so subtract 1
-      # Update the current position in the shuffled list for the next iteration
       current_position <- current_position + current_size
     }
     # return groups
     return(groups)
   }
   
-  
-  # Dynamically update the max value of the slider based on the number of people
+# We want people to select how many groups but need to set some limits
+## Dynamically update the max value of the slider based on the number of people
   observe({
     names_count <- length(strsplit(input$participant_names, ",")[[1]])
     updateSliderInput(session, "num_groups", max = names_count)
   })
   
+# Extract the number of people provided in the text input  
   groups_data <- reactive({
-    # Extract names and number of groups from input
     names_vector <- strsplit(input$participant_names, ",")[[1]]
     num_groups <- input$num_groups
     # Call the group division function
@@ -148,17 +166,20 @@ server <- function(input, output, session) {
     groups
   })
   
+# Update the table whenever the # of groups changes
   observe({
-    # Update the table whenever the groups_data reactive changes
     output$groupTable <- renderTable({
       data.frame(Group = LETTERS[1:input$num_groups], Members = sapply(groups_data(), paste, collapse = ", "))
     })
   })
   
+#DATA COLLECTION UNDERWAY VIA APP_survey.R################################################################################################################################
+  
+#PLOTTING THE DATA###########################################################################################################################################################
   
   observeEvent(input$plotResultsBtn, {
     # Load data from Google Sheets
-    raw_data <- read_sheet("1XvwU5RxdHTjB_kiEZeGXBxE_3s46905HjsPilRfMZ2g") # Google sheet ID. Either request access or replace with a new sheet
+    raw_data <- read_sheet("1XvwU5RxdHTjB_kiEZeGXBxE_3s46905HjsPilRfMZ2g") # Google sheet ID. To recreate the app, replace with a diff ID
     raw_data <- raw_data[, !names(raw_data) %in% "question_type"]
     
     raw_data_wide <- raw_data %>%
@@ -171,12 +192,12 @@ server <- function(input, output, session) {
       select(code_name, everything()) %>%
       rename(session = subject_id)
     
-    session_raw_data_wide <- dplyr::filter(raw_data_wide, session == input$session_name) # important because it hides the rest of the (non-session-relevant) data
+    session_raw_data_wide <- dplyr::filter(raw_data_wide, session == input$session_name) # important because it hides the rest of the (non-session-relevant) data; if manually testing the code, comment this out
     
-    ############################################################
-    # reshape the data to re-use Jason's code
-    ## pasted in the sections we want
-    dat <- session_raw_data_wide %>% # If manually testing the code, i.e., not launching shiny, drop "session_" and reference "raw_data_wide" here #############################################################
+ 
+# reshape the data to re-use Jason's code
+## pasted in the sections we want
+    dat <- session_raw_data_wide %>% # If manually testing the code, i.e., not launching shiny, drop "session_" and reference "raw_data_wide" here 
       rename(ID = code_name) %>%
       rename(Source = individual) %>%
       rename(Group = group) %>%
@@ -205,7 +226,7 @@ server <- function(input, output, session) {
     dat %<>% mutate(true_score = !!true_scores[dat$item], abs_error = abs(value - true_score))
     
     # aggregate scores using the Borda method
-    ## just just requires us to average the item rankings from individuals,
+    ## just requires us to average the item rankings from individuals,
     ## then convert those to ranks
     Borda <- dat %>% 
       group_by(Group, item) %>% 
@@ -213,7 +234,7 @@ server <- function(input, output, session) {
       ungroup() 
     Borda %<>% reframe (Group, item, value = rank(M), by = Group) 
     
-    # calculate error scors for Borda rankings, then get group averages
+    # calculate error scores for Borda rankings, then get group averages
     Borda %<>% mutate(true_score = !!true_scores[Borda$item], error = abs(value - true_score))
     Borda %<>% group_by(Group) %>% 
      summarize(abs_error = mean(error))%>% 
@@ -233,7 +254,6 @@ server <- function(input, output, session) {
                                 fct_relevel( "Individual", "Group", "Aggregate"))
     combined_data %<>% mutate(ID_label = if_else(Source == "Individual", ID, ""))
     
-    ############################################################################################
     # Make one tweak to Jason's code
     ## Remove aggregate (so it doesn't plot) for groups comprised solely of 1 person
     combined_data <- combined_data %>%
@@ -248,9 +268,7 @@ server <- function(input, output, session) {
       group_by(Group) %>%
       filter(!(any(num_per_source == "1_Individual") & Source == "Aggregate")) %>%
       ungroup()
-
-    #############################################################################################
-    
+   
     # draw the plot
     draw_plot <- ggplot(combined_data, aes(x = Group, y = abs_error, fill = Source, group = ID)) +
       geom_bar(stat = "identity", position = position_dodge(.8), width = 0.75, alpha = .5, color = "lightgray") +
@@ -266,13 +284,53 @@ server <- function(input, output, session) {
             plot.title = element_text(hjust = 0.5, size = 15)) +
       coord_cartesian(ylim = c(0, 145))
     
-    # Going to use this to display the result in the Shiny app as ggplot
+    # the output
     output$plotResults <- renderPlot({
       draw_plot
     })
   })
+ 
+  # We should also have a way to show the score interpretation as well as the answer key
+  ## We'll put these both in tibbles and just print as a table
+  ## First for interpreting the score ranges
+   observeEvent(input$plotScoreKeyBtn, {
+    score_key <- data.frame(Rating=c("Excellent", "Good", "Average", "Fair", 
+                                 "Poor--suggests use of Earth-bound logic", 
+                                 "Very poor--you are one of the casualties of the space program!"), 
+                        Score=c("0-25", "26-32", "33-45", "46-55", "56-70", "71-112"))
+   # tibble(score_key)
+    
+    # the output
+    output$plotScoreKey <- renderTable({
+      score_key
+    })
+  })
+   
+  # Now we do the same for the answer key
+  observeEvent(input$plotAnswerKeyBtn, {
+    answer_key <- data.frame(Item=c("Two 100 lb. tanks of oxygen", "20 liters of water", "Stellar map",
+                                    "Food concentrate", "Solar-powered FM receiver-transmitter", "50 feet of nylon rope",
+                                    "First aid kit, including injection needle", "Parachute silk", "Self-inflating life raft",
+                                    "Signal flares", "Two .45 caliber pistols", "One case of degydrated milk", 
+                                    "Portable heating unit", "Magnetic compass", "Box of matches"),
+                             Ranking=c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"),
+                             Reasoning=c("Most pressing survival need (weight is not a factor since gravity is one-sixth of the Eath's--each tank would weigh only about 17lbs. on the moon",
+                                              "Needed for replacement of tremendous liquid loss on the light side", "Primary means of navigation - star patterns appear essentially identical on the moon as on Earth", 
+                                              "Efficient means of supplying every requirements", "For communication with mother ship (but FM requires line-of-sight transmission and can only be used over short ranges", 
+                                              "Useful in scaling cliffs and tying injured together", "Needles connected to vials of vitamins, medicines, etc. will fit special aperture in NASA space suit",
+                                              "Protection from the sun's rays", "CO2 bottle in military raft may be used for propulsion", "Use as distress signal when the mother ship is sighted", 
+                                              "Possible means of self-propulsion", "Bulkier duplication of food concetrate", "Not needed unless on the dark side", 
+                                              "The magnetic field on the mood is not polarized, so it's worthless for navigation", 
+                                              "Virtually worthless--there's no oxygen on the moon to sustain combustion"))
+ #  tibble(answer_key)
+        # the output
+    output$plotAnswerKey <- renderTable({
+      answer_key
+    })
+  })
 }
 
-# Run the app
+#----------------------------------------------------------------------------------------------------------------------------------------------------------
+#-------CALL SHINY APP FUNCTION
 shinyApp(ui, server)
 
