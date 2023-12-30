@@ -11,20 +11,21 @@ library(tidyverse)
 
 ############################################################################################################################################################
 
-# The components of a shiny app are just the user interface + the server functions + a call to the shinyApp function
-# I use hashtags to break apart mini-sections like this, and dashes to break apart where we define the ui and server
+# Shiny apps are comprised of three components: a UI, server, and a call to the shinyApp function, i.e., ShinyApp(ui, server)
+## We start with a little bit of set-up, and then move on to define our UI and server
+## I use hashtags to break apart mini-sections like this, and dashes to divide  those more distinct components
 
 ############################################################################################################################################################
 
-# this assumes you have .secrets in the same directory and therefore don't need to reauthenticate 
-## (assuming you ran App_survey.R first)
+# This assumes we have .secrets in the same directory and therefore don't need to reauthenticate 
+## .secrets would have been created from our intial authentification, as occured in the App_survey.R script
 gs4_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 
 ############################################################################################################################################################
 
 # Link to the live survey
 app <- "https://jannahmoussaoui.shinyapps.io/survey/"
-app_no <- "A link will be available once you provide a name for the session."
+no_name_provided <- "A link will be available once you provide a name for the session." # We only want people with a session name to access the task
 user <- "?user_id="
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -43,12 +44,13 @@ ui <- navbarPage(
                   <p>Please note that this activity was designed to be implemented in a synchronous classroom setting.</p>
                   <br>
                   <h5><b>Source</b></h5>
-                  <p>https://github.com/jannahmoussaoui/shiny-nasa</p>"),
+                  <p><a href=https://github.com/jannahmoussaoui/shiny-nasa>GitHub Repository</a></p>"),
     ),
     tabPanel("Instructions",
              HTML("<br>
              <h5><b>Step 1: Come up with a session name</b></h5>
-                  <p>First, we need to pick out a relatively unique name for this session. This will allow us to send everyone to the same link.</p>"),
+                  <p>First, we need to pick out a relatively unique name for this session. This will allow us to send everyone to the same link.
+                  <b>Tip: note down your session name so that you may reference it as needed.</b></p>"),
              textInput("session_name", "Session Name:", placeholder = "e.g., course CRN"),
              HTML("<br>
                   <h5><b>Step 2: List out the particiapnts</b></h5>
@@ -58,8 +60,10 @@ ui <- navbarPage(
              HTML("<br>
                   <h5><b>Step 3: Number of Groups</b></h5>
                   <p>This activity works best with groups of 3-4 people but we can make groups as big or as small as we like."),
+             # We need to set an initial max just to satisfy the required arguments.
+             ## Our server is "watching" this, so it'll get overwritten instantly.
              sliderInput("num_groups", "Number of Groups:",
-                         min = 1, max = 3, value = 2),  # Set an initial max value just to satisfy the function. This basically gets overwritten instantly
+                         min = 1, max = 3, value = 2),
              HTML("<br>
                   <h5><b>Step 4: View groups</b></h5>"),
              tableOutput("groupTable"),
@@ -96,27 +100,32 @@ ui <- navbarPage(
 server <- function(input, output, session) {
 
 # SESSION NAME + SURVEY LINK ###########################################################################################################################################################
-# Create the survey link when the session_name is provided; using an if else
-## to force people to pick a session_name
+
+# Observe and observeEvent allow us to create reacitivity
+## Several things should happens only when text input, slider, or button are interacted with
+  
+  # Create the survey link when the session_name is provided
+## Use if else so that people must pick a session_name to get the link
+## otherwise we throw an error
   observeEvent(input$session_name, {
     if (!is.null(input$session_name) && input$session_name !="") {
       link <- paste0(app, user, input$session_name)
     } else {
-      link <- app_no
+      link <- no_name_provided
     }
       output$surveyLink <- renderUI({
         HTML(paste(tags$a(href = link, target = "_blank", link)))
       })
   }) 
-# Duplicating the lines above because for whatever reason when we try to print the htmlOutput 
+# Duplicate the lines above because for whatever reason when we try to print the htmlOutput 
 ## in the ui section it interrupts the other outputs. If we decide we want to build a different
-## survey for groups vs. individuals (and remove the yes/no item), we can make the links different
-## not doing that now bc it involves a lot more lines of code than its worth for removing 1 MC item
+## survey for groups vs. individuals (and remove the "Are you completing this as an individual or 
+## in a group?" from the survey, we can make the links different.
   observeEvent(input$session_name, {
     if (!is.null(input$session_name) && input$session_name !="") {
       link <- paste0(app, user, input$session_name)
     } else {
-      link <- app_no
+      link <- no_name_provided
     }
     output$surveyLink2 <- renderUI({
       HTML(paste(tags$a(href = link, target = "_blank", link)))
@@ -129,13 +138,14 @@ server <- function(input, output, session) {
 ## First, shuffle the names so that we're randomly putting people in groups
 ## Use integer division %/% to figure out the minimum number of participants in each group (the quotient)
 ## It's likely things won't divide perfectly so calculate the remainder with modulus %%
-## Create an empty list to store groups. We'll need this "container" so the for loop can assign people to the corresponding groups
-## We're going to loop to create each of our groups, so we need to keep track of our position on the original list
-## so we'll use current_position and start indexing at 1 to do this
+## Create an empty list to to store our groups. We'll use this as a container.
+## We're going to loop to create each one of our groups, so we need to keep track of our position on the original list
+## We'll use current_position and start indexing at 1 to do this
 ## On our first iteration, the group at the minimum will have n = quotient, and if the iteration is <= remainder, we add 1
 ## if the iteration (1) is greater than the remainder (0), there are no remainders, and we add 0
 ## Once we know the group size, we can assign names
-## Then we update our current position so that the next iteration starts in the right spot
+## Then we update our current position so that the next iteration starts in the right spot and
+## we can be sure we're adding people to the list container without overlap
   divide_names_into_groups <- function(names, num_groups) {
     shuffled_names <- sample(names)
     group_size <- length(shuffled_names) %/% num_groups
@@ -151,30 +161,32 @@ server <- function(input, output, session) {
     return(groups)
   }
   
-# We want people to select how many groups but need to set some limits
-## Dynamically update the max value of the slider based on the number of people
+# We want people to select how many groups but want to ensure they choose reasonable values
+## Dynamically update the max value on the slider to match the number of people
+## The number of groups should never exceed the number of participants
   observe({
     names_count <- length(strsplit(input$participant_names, ",")[[1]])
     updateSliderInput(session, "num_groups", max = names_count)
   })
   
 # Extract the number of people provided in the text input  
+## Call the group division function
   groups_data <- reactive({
     names_vector <- strsplit(input$participant_names, ",")[[1]]
     num_groups <- input$num_groups
-    # Call the group division function
     groups <- divide_names_into_groups(names_vector, num_groups)
     groups
   })
   
 # Update the table whenever the # of groups changes
+## Letter the groups  
   observe({
     output$groupTable <- renderTable({
       data.frame(Group = LETTERS[1:input$num_groups], Members = sapply(groups_data(), paste, collapse = ", "))
     })
   })
   
-#DATA COLLECTION UNDERWAY VIA APP_survey.R################################################################################################################################
+# DATA COLLECTION UNDERWAY VIA APP_survey.R ################################################################################################################################
   
 #PLOTTING THE DATA###########################################################################################################################################################
   
@@ -185,21 +197,21 @@ server <- function(input, output, session) {
     raw_data <- raw_data %>%
       mutate(
         question_id = case_when(
-          question_id == "box_of_matches" ~ "matches",
-          question_id == "food_concentrate" ~ "food",
-          question_id == "fifty_feet_of_nylon_rope" ~ "nylon",
-          question_id == "parachute_silk" ~ "silk",
-          question_id == "portable_heating_unit" ~ "heating",
-          question_id == "two_45_caliber_pistol" ~ "pistol",
-          question_id == "one_case_of_dehydrated_milk" ~ "milk",
-          question_id == "two_100_lb_tanks_of_oxygen" ~ "oxygen",
-          question_id == "stellar_map" ~ "map",
-          question_id == "selfinflating_life_raft" ~ "raft",
-          question_id == "magnetic_compass" ~ "compass",
-          question_id == "twenty_liters_of_water" ~ "water",
-          question_id == "signal_flares" ~ "flare",
-          question_id == "first_aid_kit_including_injection_needle" ~ "injection",
-          question_id == "solarpowered_fm_receivertransmitter" ~ "receiver",
+          question_id == "rank_the_item_box_of_matches" ~ "matches",
+          question_id == "rank_the_item_food_concentrate" ~ "food",
+          question_id == "rank_the_item_fifty_feet_of_nylon_rope" ~ "nylon",
+          question_id == "rank_the_item_parachute_silk" ~ "silk",
+          question_id == "rank_the_item_portable_heating_unit" ~ "heating",
+          question_id == "rank_the_item_two_45_caliber_pistol" ~ "pistol",
+          question_id == "rank_the_item_one_case_of_dehydrated_milk" ~ "milk",
+          question_id == "rank_the_item_two_100_lb_tanks_of_oxygen" ~ "oxygen",
+          question_id == "rank_the_item_stellar_map" ~ "map",
+          question_id == "rank_the_item_selfinflating_life_raft" ~ "raft",
+          question_id == "rank_the_item_magnetic_compass" ~ "compass",
+          question_id == "rank_the_item_twenty_liters_of_water" ~ "water",
+          question_id == "rank_the_item_signal_flares" ~ "flare",
+          question_id == "rank_the_item_first_aid_kit_including_injection_needle" ~ "injection",
+          question_id == "rank_the_item_solarpowered_fm_receivertransmitter" ~ "receiver",
           TRUE ~ question_id
         )
       )
@@ -215,7 +227,7 @@ server <- function(input, output, session) {
       rename(session = subject_id)
     
     # In case people hit submit twice, we want to remove duplicate scores
-    ## Otherwise, their  error score will be doubled/tripled/etc...
+    ## Otherwise, their  error score will be doubled
     raw_data_wide <- raw_data_wide %>%
       distinct()
     
@@ -224,7 +236,7 @@ server <- function(input, output, session) {
  
 # reshape the data to re-use Jason's code
 ## pasted in the sections we want
-    dat <- session_raw_data_wide %>% # If manually testing the code, i.e., not launching shiny, drop "session_" and reference "raw_data_wide" here 
+    dat <- session_raw_data_wide %>% # If manually testing the code, drop "session_" and reference "raw_data_wide" here 
       rename(ID = code_name) %>%
       rename(Source = individual) %>%
       rename(Group = group) %>%
@@ -294,21 +306,6 @@ server <- function(input, output, session) {
                                 fct_relevel( "Individual", "Group", "Aggregate"))
     combined_data %<>% mutate(ID_label = if_else(Source == "Individual", ID, ""))
     
-    # Make one tweak to Jason's code
-    ## Remove aggregate (so it doesn't plot) for groups comprised solely of 1 person
-    combined_data <- combined_data %>%
-      group_by(Source, Group) %>%
-      mutate(
-        num_per_group = n_distinct(ID),
-        num_per_source = paste(num_per_group, Source, sep = "_")
-      ) %>%
-      ungroup()
-    
-    combined_data <- combined_data %>%
-      group_by(Group) %>%
-      filter(!(any(num_per_source == "1_Individual") & Source == "Aggregate")) %>%
-      ungroup()
-   
     # draw the plot
     draw_plot <- ggplot(combined_data, aes(x = Group, y = abs_error, fill = Source, group = ID)) +
       geom_bar(stat = "identity", position = position_dodge(.8), width = 0.75, alpha = .5, color = "lightgray") +
@@ -328,6 +325,7 @@ server <- function(input, output, session) {
     output$plotResults <- renderPlot({
       draw_plot
     })
+    
   })
  
   # We should also have a way to show the score interpretation as well as the answer key
