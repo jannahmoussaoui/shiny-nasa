@@ -1,3 +1,6 @@
 .secrets
 *./secrets
 .Rproj.user
+.RData
+.Rhistory
+ftm_shinynasa.Rproj

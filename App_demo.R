@@ -1,10 +1,6 @@
 library(shiny)
-library(tibble)
 library(shinyjs)
 library(googlesheets4)
-library(ggplot2)
-library(tidyr)
-library(dplyr)
 library(magrittr)
 library(cowplot)
 library(tidyverse)
@@ -44,7 +40,7 @@ ui <- navbarPage(
                   <p>Please note that this activity was designed to be implemented in a synchronous classroom setting.</p>
                   <br>
                   <h5><b>Source</b></h5>
-                  <p><a href=https://github.com/jannahmoussaoui/shiny-nasa>GitHub Repository</a></p>"),
+                  <p><a href=https://github.com/jannahmoussaoui/shiny-nasa > GitHub Repository</a></p>"),
     ),
     tabPanel("Instructions",
              HTML("<br>
@@ -193,10 +189,11 @@ server <- function(input, output, session) {
   observeEvent(input$plotResultsBtn, {
     # Load data from Google Sheets
     raw_data <- read_sheet("1XvwU5RxdHTjB_kiEZeGXBxE_3s46905HjsPilRfMZ2g") # Google sheet ID. To recreate the app, replace with a diff ID
-    raw_data <- raw_data[, !names(raw_data) %in% "question_type"] #%>%
-    raw_data <- raw_data %>%
-      mutate(
-        question_id = case_when(
+    
+    # Drop unnecessary column
+    ## Rename questions to be more succinct
+    raw_data %<>% select(-question_type) %>%
+      mutate(question_id = case_when(
           question_id == "rank_the_item_box_of_matches" ~ "matches",
           question_id == "rank_the_item_food_concentrate" ~ "food",
           question_id == "rank_the_item_fifty_feet_of_nylon_rope" ~ "nylon",
@@ -228,8 +225,7 @@ server <- function(input, output, session) {
     
     # In case people hit submit twice, we want to remove duplicate scores
     ## Otherwise, their  error score will be doubled
-    raw_data_wide <- raw_data_wide %>%
-      distinct()
+    raw_data_wide %<>% distinct()
     
     session_raw_data_wide <- dplyr::filter(raw_data_wide, session == input$session_name) # important because it hides the rest of the (non-session-relevant) data; if manually testing the code, comment this out
     
@@ -323,7 +319,7 @@ server <- function(input, output, session) {
     
     # the output
     output$plotResults <- renderPlot({
-      draw_plot
+           draw_plot
     })
     
   })

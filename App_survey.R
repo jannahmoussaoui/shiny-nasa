@@ -1,8 +1,6 @@
-library(tidyr)
-library(dplyr)
 library(shiny)
 library(shinysurveys)
-library(tibble)
+library(tidyverse)
 library(googlesheets4)
 library(googledrive)
 
@@ -20,12 +18,16 @@ library(googledrive)
 ## A .secrets repo will be created. Don't git commit this!
 ## Replace below with your own email
 
-options(
-  # whenever there is one account token found, use the cached token
-  gargle_oauth_email = TRUE,
-  # specify auth tokens should be stored in a hidden directory ".secrets"
-  gargle_oauth_cache = "nasa/.secrets"
-)
+
+# On JTramer's blog, not sure this bit is *actually* needed
+# options(
+#   # whenever there is one account token found, use the cached token
+#   gargle_oauth_email = TRUE,
+#   # specify auth tokens should be stored in a hidden directory ".secrets"
+#   gargle_oauth_cache = "nasa/.secrets"
+# )
+# 
+
 gs4_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 drive_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 
@@ -33,13 +35,9 @@ drive_auth(cache = ".secrets", email = "jannahmoussaoui@gmail.com")
 #-------DEFINE THE QUESTIONS
 
 # Create questions
-## ShinySurveys expects these to be in a data frame
-## I will just bind a bunch of dataframes together...it's inefficient but it works
-## As a sidenote, I wanted to use matrix input for the NASA questions
-## But for whatever reason, it renders the getSurvetData() function useless
-## and I couldn't find documentation on git or the package developer
-## there have been no updates to the git page or requests, so I'm a little worried
-## shinysurveys has been abandoned
+## ShinySurveys expects questions to be in a data frame
+## For simplicity, we'll create a data frame per question type
+## Then, we'll bind these together
 
 df1 <- data.frame(question = "Are you completing this as an individual or with a group?",
                   option = t(c("Individual", "Group")),
@@ -49,7 +47,8 @@ df1 <- data.frame(question = "Are you completing this as an individual or with a
                   dependence_value = NA,
                   required = TRUE) %>%
   pivot_longer(cols = starts_with("option"),
-               values_to = "option")  
+               values_to = "option") %>% 
+  select(-name)
 df2 <- data.frame(question = "What group are you a part of?",
                   option = t(c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")),
                   input_type = "select",
@@ -58,7 +57,8 @@ df2 <- data.frame(question = "What group are you a part of?",
                   dependence_value = NA,
                   required = TRUE) %>%
   pivot_longer(cols = starts_with("option"),
-               values_to = "option") 
+               values_to = "option") %>% 
+  select(-name)
 
 df3 <- data.frame(question = "What secret alias would you like to use? This will be displayed on a graph.",
                   option = "e.g., Clark Kent",
@@ -71,13 +71,13 @@ df3 <- data.frame(question = "What secret alias would you like to use? This will
 df4 <- data.frame(
   question = rep(
     c(
-      "Box of matches", "Food concentrate", "Fifty feet of nylon rope",
-      "Parachute silk", "Portable heating unit", "Two .45 caliber pistol",
-      "One case of dehydrated milk", "Two 100 lb. tanks of oxygen",
-      "Stellar map", "Self-inflating life raft", "Magnetic compass",
-      "Twenty liters of water", "Signal flares",
-      "First aid kit, including injection needle",
-      "Solar-powered FM receiver-transmitter"
+      "Rank the item: Box of matches", "Rank the item: Food concentrate", "Rank the item: Fifty feet of nylon rope",
+      "Rank the item: Parachute silk", "Rank the item: Portable heating unit", "Rank the item: Two .45 caliber pistol",
+      "Rank the item: One case of dehydrated milk", "Rank the item: Two 100 lb. tanks of oxygen",
+      "Rank the item: Stellar map", "Rank the item: Self-inflating life raft", "Rank the item: Magnetic compass",
+      "Rank the item: Twenty liters of water", "Rank the item: Signal flares",
+      "Rank the item: First aid kit, including injection needle",
+      "Rank the item: Solar-powered FM receiver-transmitter"
     ), each = 15
   ),
   option = rep(
@@ -125,7 +125,7 @@ server <- function(input, output, session) {
     response_data <- getSurveyData()
     
     # Use googlesheets4 functions to append to the sheet
-    sheet_id <- "1XvwU5RxdHTjB_kiEZeGXBxE_3s46905HjsPilRfMZ2g"
+    sheet_id <- "1XvwU5RxdHTjB_kiEZeGXBxE_3s46905HjsPilRfMZ2g" #ID is pulled from the URL of the spreadsheet, but we could also use the URL
     sheet_name <- "raw_data"
     
     # Find the sheet or create a new one
