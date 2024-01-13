@@ -4,6 +4,7 @@ library(googlesheets4)
 library(magrittr)
 library(cowplot)
 library(tidyverse)
+library(plotly)
 
 ############################################################################################################################################################
 
@@ -55,7 +56,7 @@ ui <- navbarPage(
              textInput("participant_names", "Participants:", width = "50%", placeholder = "e.g., Jannah, Jason..."),
              HTML("<br>
                   <h5><b>Step 3: Number of Groups</b></h5>
-                  <p>This activity works best with groups of 3-4 people but we can make groups as big or as small as we like."),
+                  <p>This activity works best with groups of 4-5 people but we can make groups as big or as small as we like."),
              # We need to set an initial max just to satisfy the required arguments.
              ## Our server is "watching" this, so it'll get overwritten instantly.
              sliderInput("num_groups", "Number of Groups:",
@@ -80,11 +81,15 @@ ui <- navbarPage(
              HTML("<br>"),
              actionButton("plotResultsBtn", "Plot the results"),
              plotOutput("plotResults"),
+             HTML("<br>"),
              actionButton("plotScoreKeyBtn", "NASA's Error Score Interpretation"),
              tableOutput("plotScoreKey"),
              HTML("<br>"),
              actionButton("plotAnswerKeyBtn", "NASA's Answers and Explanation"),
-             tableOutput("plotAnswerKey")
+             tableOutput("plotAnswerKey"),
+             HTML("<br>"),
+             actionButton("plotItemsBtn", "Plot item-level"),
+             plotlyOutput("plotItems")
     )
   ),
   theme = bslib::bs_theme(bootswatch = "sandstone")
@@ -264,7 +269,7 @@ server <- function(input, output, session) {
       filter(Source == "Individual") %>%
       group_by(Group) %>%
       summarize(num_per_group = n_distinct(ID))
-    
+    dat2 <- dat
     # aggregate scores using the Borda method
     ## just requires us to average the item rankings from individuals,
     ## then convert those to ranks
@@ -284,6 +289,8 @@ server <- function(input, output, session) {
     
     # calculate error scores for Borda rankings, then get group averages
     Borda %<>% mutate(true_score = !!true_scores[Borda$item], error = abs(value - true_score))
+   
+    # Then proceed
     Borda %<>% group_by(Group) %>% 
      summarize(abs_error = sum(error))%>% 
      mutate(Source = "Aggregate") 
@@ -310,7 +317,7 @@ server <- function(input, output, session) {
                 position = position_dodge(0.8), vjust = .5, size = 4, angle = 90, hjust = -.15) +
       scale_fill_manual(values = c(Individual = "#ED2024", Group = "#FFCDD2", Aggregate = "blue")) +
       labs(title = "Error Scores for Individuals, Groups, and Aggregate", x = "Groups", y = "Absolute Error") +
-      theme_minimal() +
+      theme_bw() +
       theme(legend.position = "top", legend.key.size = unit(20, "point"), legend.spacing.x = unit(10, "point"),
             legend.title = element_blank(), 
             legend.text = element_text(size = 12),
@@ -321,7 +328,6 @@ server <- function(input, output, session) {
     output$plotResults <- renderPlot({
            draw_plot
     })
-    
   })
  
   # We should also have a way to show the score interpretation as well as the answer key
@@ -362,9 +368,180 @@ server <- function(input, output, session) {
       answer_key
     })
   })
+  
+  observeEvent(input$plotItemsBtn, {
+    raw_data <- read_sheet("1XvwU5RxdHTjB_kiEZeGXBxE_3s46905HjsPilRfMZ2g") # Google sheet ID. To recreate the app, replace with a diff ID
+    raw_data %<>% select(-question_type) %>%
+      mutate(question_id = case_when(
+        question_id == "rank_the_item_box_of_matches" ~ "matches",
+        question_id == "rank_the_item_food_concentrate" ~ "food",
+        question_id == "rank_the_item_fifty_feet_of_nylon_rope" ~ "nylon",
+        question_id == "rank_the_item_parachute_silk" ~ "silk",
+        question_id == "rank_the_item_portable_heating_unit" ~ "heating",
+        question_id == "rank_the_item_two_45_caliber_pistol" ~ "pistol",
+        question_id == "rank_the_item_one_case_of_dehydrated_milk" ~ "milk",
+        question_id == "rank_the_item_two_100_lb_tanks_of_oxygen" ~ "oxygen",
+        question_id == "rank_the_item_stellar_map" ~ "map",
+        question_id == "rank_the_item_selfinflating_life_raft" ~ "raft",
+        question_id == "rank_the_item_magnetic_compass" ~ "compass",
+        question_id == "rank_the_item_twenty_liters_of_water" ~ "water",
+        question_id == "rank_the_item_signal_flares" ~ "flare",
+        question_id == "rank_the_item_first_aid_kit_including_injection_needle" ~ "injection",
+        question_id == "rank_the_item_solarpowered_fm_receivertransmitter" ~ "receiver",
+        TRUE ~ question_id
+      )
+      )
+    raw_data_wide <- raw_data %>%
+      pivot_wider(
+        names_from = question_id,
+        values_from = response,
+        values_fn = list(response = list)
+      ) %>%
+      unnest(cols = c(individual, group, code_name, matches, food, nylon, silk, heating, pistol, milk, oxygen, map, raft, compass, water, flare, injection, receiver)) %>%
+      select(code_name, everything()) %>%
+      rename(session = subject_id)
+    
+    raw_data_wide %<>% distinct()
+    
+    session_raw_data_wide <- dplyr::filter(raw_data_wide, session == input$session_name) # important because it hides the rest of the (non-session-relevant) data; if manually testing the code, comment this out
+    
+    
+    dat <- session_raw_data_wide %>%
+      rename(ID = code_name) %>%
+      rename(Source = individual) %>%
+      rename(Group = group) %>%
+      rename("1" = matches) %>%
+      rename("2" = food) %>%
+      rename("3" = nylon) %>%
+      rename("4" = silk) %>%
+      rename("5" = heating) %>%
+      rename("6" = pistol) %>%
+      rename("7" = milk) %>%
+      rename("8" = oxygen) %>%
+      rename("9" = map) %>%
+      rename("10" = raft) %>%
+      rename("11" = compass) %>%
+      rename("12" = water) %>%
+      rename("13" = flare) %>%
+      rename("14" = injection) %>%
+      rename("15" = receiver) %>%
+      pivot_longer(cols = 5:19) %>%
+      rename(item = name)
+    true_scores <- c(15, 4, 6, 8, 13, 11, 12, 1, 3, 9, 14, 2, 10, 7, 5)
+    dat$value <- as.numeric(dat$value)
+    dat$item <- as.numeric(dat$item)
+    
+    # create a column of error scores
+    ## also count N per group
+    dat %<>% mutate(true_score = !!true_scores[dat$item], abs_error = abs(value - true_score))
+    num_per_group <- dat %>%
+      filter(Source == "Individual") %>%
+      group_by(Group) %>%
+      summarize(num_per_group = n_distinct(ID))
+    dat2 <- dat
+   
+    Borda <- dat %>%
+      left_join(num_per_group, by = "Group") %>%
+      mutate(num_per_group = coalesce(num_per_group, 1)) %>%
+      filter(!num_per_group == 1) %>%
+      filter(!Source == "Group") %>% 
+      group_by(Group, item) %>% 
+      summarize(M = mean(value)) %>% 
+      ungroup() %>%
+      group_by(Group) %>% 
+      mutate(value = rank(M, ties.method = "last")) %>% 
+      ungroup()
+    Borda %<>% reframe(Group, item, value)
+    
+    
+    Borda %<>% mutate(true_score = !!true_scores[Borda$item], error = abs(value - true_score))
+    TestBorda <- Borda
+   
+    TestDat <- dat2 %>%
+       select(-abs_error, -session)
+    TestBorda$Source <- "Aggregate"
+    TestBorda$ID <- paste(TestBorda$Source, TestBorda$Group)
+    TestBorda %<>% mutate(true_score = !!true_scores[TestBorda$item], error = (true_score - value))
+    TestDat %<>% mutate(true_score = !!true_scores[TestDat$item], error = (true_score - value))
+    
+    TestDat %<>% rbind(TestBorda) %>% 
+       mutate(
+         item = case_when(
+         item == "1" ~ "15 - Box of Matches",
+         item == "2" ~ "4 - Food concentrate",
+         item == "3" ~ "6 - Fifty feet of nylon rope",
+         item == "4" ~ "8 - Parachute Silk",
+         item == "5" ~ "13 - Portable heating unit",
+         item == "6" ~ "11 - Two .45 caliber pistols",
+         item == "7" ~ "12 - One case of dehydrated milk",
+         item == "8" ~ "1 - Two 100lb. tanks of oxygen",
+         item == "9" ~ "3 - Stellar map",
+         item == "10" ~ "9 - Self-inflating raft" ,
+         item == "11" ~ "14 - Magnetic compass" ,
+         item == "12" ~ "2 - 20 liters of water" ,
+         item == "13" ~ "10 - Signal flares" ,
+         item == "14" ~ "7 - First aid kit" ,
+         item == "15" ~ "5 - Solar-powered FM receiver-transmitter"
+       )
+     )
+       
+       # Define the desired order of items
+       desired_order <- c(
+       "1 - Two 100lb. tanks of oxygen",
+       "2 - 20 liters of water",
+       "3 - Stellar map",
+       "4 - Food concentrate",
+       "5 - Solar-powered FM receiver-transmitter",
+       "6 - Fifty feet of nylon rope",
+       "7 - First aid kit",
+       "8 - Parachute Silk",
+       "9 - Self-inflating raft",
+       "10 - Signal flares",
+       "11 - Two .45 caliber pistols",
+       "12 - One case of dehydrated milk",
+       "13 - Portable heating unit",
+       "14 - Magnetic compass",
+       "15 - Box of Matches"
+       )
+       
+       # Assuming TestDat is your data frame
+       TestDat$item <- factor(TestDat$item, levels = desired_order)
+       
+       # Your ggplot code
+       p <- ggplot(TestDat, aes(x = item, y = error, shape = Source, group = ID)) +
+         geom_point(aes(color = Group), position = position_jitter(width = 0, height = .75), alpha = .65, size = 2.5, stroke = .35, show.legend = TRUE) +
+         scale_shape_manual(values = c(Individual = 20, Group = 1, Aggregate = 13)) +
+         labs(title = "Errors on Each Item", x = "", y = "Error Score") +
+         theme_bw() +
+         theme(
+           legend.position = "top", 
+           legend.key.size = unit(20, "point"), 
+           legend.spacing.x = unit(10, "point"),
+           legend.title = element_blank(), 
+           legend.text = element_text(size = 12),
+           plot.title = element_text(hjust = 0.5, size = 15),
+           axis.text.x = element_text(angle = 45, hjust = 1, margin = margin(b = 15))
+         ) + 
+         geom_hline(yintercept = 0, linetype = "dashed", color = "black", alpha = .5) +
+         scale_y_continuous(breaks = seq(-15, 15, 3)) +
+         annotate("text", x = 0, y = 15, label = "Ranked Too High", hjust = -0.1, vjust = 0.5, color = "black", size = 2.5) +
+         annotate("text", x = 0, y = -15, label = "Ranked Too Low", hjust = -0.1, vjust = 0.5, color = "black", size = 2.5)
+       
+       # Convert ggplot to plotly with a separate legend for Source
+       p <- ggplotly(p, tooltip = c("ID"), style = "Source", dynamicTicks = TRUE)
+       
+       # Print the interactive plot
+       output$plotItems <- renderPlotly({
+         p %>%
+           config(displayModeBar = FALSE) %>%
+           layout(height = 800)
+       })
+})
+               
 }
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
 #-------CALL SHINY APP FUNCTION
 shinyApp(ui, server)
+
 

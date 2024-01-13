@@ -5,9 +5,9 @@ account: jannahmoussaoui
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 10845971
-bundleId: 8095268
+bundleId: 8141323
 url: https://jannahmoussaoui.shinyapps.io/demo/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: App_survey.R|LICENSE.md|README.md
+ignoredFiles: App_survey.R|Interactive.html|Interactive_nobar.html|interactive_wip.html|LICENSE.md|README.md

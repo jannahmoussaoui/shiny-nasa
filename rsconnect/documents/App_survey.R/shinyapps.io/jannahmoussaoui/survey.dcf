@@ -5,7 +5,7 @@ account: jannahmoussaoui
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 10845964
-bundleId: 8095260
+bundleId: 8110009
 url: https://jannahmoussaoui.shinyapps.io/survey/
 version: 1
 asMultiple: FALSE
